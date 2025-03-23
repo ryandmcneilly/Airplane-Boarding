@@ -1,0 +1,83 @@
+n_rows 10
+n_columns 2
+n_passengers 20
+row 2
+column 2
+settle_time 70.0
+travel_times 3.0
+row 3
+column 1
+settle_time 68.0
+travel_times 2.0 2.0
+row 5
+column 2
+settle_time 42.0
+travel_times 3.0 3.0 3.0 3.0
+row 7
+column 1
+settle_time 43.0
+travel_times 3.0 3.0 3.0 3.0 3.0 3.0
+row 1
+column 1
+settle_time 45.0
+travel_times
+row 6
+column 2
+settle_time 74.0
+travel_times 1.0 1.0 1.0 1.0 1.0
+row 10
+column 1
+settle_time 45.0
+travel_times 2.0 2.0 2.0 2.0 2.0 2.0 2.0 2.0 2.0
+row 4
+column 2
+settle_time 46.0
+travel_times 2.0 2.0 2.0
+row 9
+column 1
+settle_time 81.0
+travel_times 2.0 2.0 2.0 2.0 2.0 2.0 2.0 2.0
+row 2
+column 1
+settle_time 38.0
+travel_times 2.0
+row 1
+column 2
+settle_time 49.0
+travel_times
+row 7
+column 2
+settle_time 65.0
+travel_times 3.0 3.0 3.0 3.0 3.0 3.0
+row 8
+column 2
+settle_time 40.0
+travel_times 1.0 1.0 1.0 1.0 1.0 1.0 1.0
+row 4
+column 1
+settle_time 16.0
+travel_times 2.0 2.0 2.0
+row 3
+column 2
+settle_time 49.0
+travel_times 2.0 2.0
+row 10
+column 2
+settle_time 72.0
+travel_times 3.0 3.0 3.0 3.0 3.0 3.0 3.0 3.0 3.0
+row 5
+column 1
+settle_time 81.0
+travel_times 3.0 3.0 3.0 3.0
+row 8
+column 1
+settle_time 62.0
+travel_times 3.0 3.0 3.0 3.0 3.0 3.0 3.0
+row 9
+column 2
+settle_time 31.0
+travel_times 3.0 3.0 3.0 3.0 3.0 3.0 3.0 3.0
+row 6
+column 1
+settle_time 18.0
+travel_times 1.0 1.0 1.0 1.0 1.0
