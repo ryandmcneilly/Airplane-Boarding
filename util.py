@@ -1,4 +1,4 @@
 from collections import namedtuple
 
-Passenger = namedtuple("Passenger", ["row", "column", "settle_time", "move_times"])
+Passenger = namedtuple("Passenger", ["row", "column", "settle_time", "move_times", "id"])
 Plane = namedtuple("Plane", ["num_rows", "num_cols", "num_passengers"])

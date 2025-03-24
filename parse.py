@@ -12,10 +12,11 @@ def parse_file(file_path):
     # Iterate over the passengers
     Passengers = [
         Passenger(
+            id=i//4,
             row=int(data[i].split(" ")[1]),
             column=int(data[i+1].split(" ")[1]),
             settle_time=float(data[i+2].split(" ")[1]),
-            move_times=tuple(float(time) for time in data[i+3].split(" ")[1:]),
+            move_times=(given_times:=tuple(float(time) for time in data[i+3].split(" ")[1:])) + tuple(0 for _ in range(PlaneInfo.num_rows - len(given_times))),
         )
         for i in range(0, len(data), 4)
     ]
