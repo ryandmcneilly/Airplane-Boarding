@@ -9,37 +9,30 @@
 # S = U_{r\in R} S_r
 from engines.paper_solve import build_model
 from parse import parse_file
-from util import Plane, Passenger
+# from util import get_obj_val
 
-
-
-def person_to_order(person: Passenger, plane: Plane):
-    k_r = plane.num_cols // 2
-    if person.column <= k_r:
-        return (2*person.column - 1) * plane.num_rows + 1 - person.row
-    elif k_r < person.column <= k_r: # currently impossible as k_r^1 = k_r^2
-        return (k_r + person.column) * plane.num_rows + 1 - person.row
-    elif person.column >= k_r + 1:
-        return (k_r - person.column + 1) * plane.num_rows + 1 - person.row
-    raise ValueError("Unreachable")
 
 def solve(filename: str):
     Passengers, Plane = parse_file(filename)
-    result = [None for _ in range(Plane.num_rows * Plane.num_cols)]
-    for p in Passengers:
-        order = person_to_order(p, Plane)
-        result[order] = p
+
+    # Do not care about the order as there is no passenger inteference within rows / outside the aisle
+    result = sorted(Passengers, key=lambda p: (p.row, sum(p.move_times)), reverse=True)
+
     return result
 
-def get_obj_val(result):
-    m, X = build_model("../data/mp_sp/10_2/m_p_s_p_10_2_0.abp")
+def get_obj_val(filename, result):
+    m, X = build_model(filename)
     for i, p in enumerate(result, start=1):
         X[p, i].lb = 1 # force on
     m.optimize()
     return m.objVal
 
-def main():
-    res = solve("../data/mp_sp/10_2/m_p_s_p_10_2_0.abp")
-    print(get_obj_val(res))
 
-main()
+def main():
+    filename = "../data/mp_sp/10_2/m_p_s_p_10_2_0.abp"
+    res = solve(filename)
+    print(res)
+    print(get_obj_val(filename, res))
+
+if __name__ == "__main__":
+    main()

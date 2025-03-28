@@ -1,7 +1,6 @@
 import gurobipy as gp
 from parse import parse_file
 from util import Passenger, Plane
-from itertools import chain, combinations
 
 # passengers_computed = set()
 # def compute_M(P: list[Passenger], p: Passenger, r: int, i: int):

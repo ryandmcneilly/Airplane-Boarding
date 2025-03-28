@@ -4,9 +4,7 @@ def parse_file(file_path):
     f = open(file_path, "r")
     data = f.readlines()
 
-    plane_data = data[:3]
     PlaneInfo = Plane(num_rows=int(data[0].split(" ")[1]), num_cols=int(data[1].split(" ")[1]), num_passengers=int(data[2].split(" ")[1]))
-
     data = data[3:]
 
     # Iterate over the passengers
