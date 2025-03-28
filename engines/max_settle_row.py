@@ -2,6 +2,7 @@ import itertools
 
 from engines.paper_solve import build_model
 from parse import parse_file
+from util import visualise_res
 
 
 def solve(filename: str):
@@ -33,8 +34,10 @@ def get_obj_val(filename, result):
 def main():
     filename = "../data/mp_sp/10_2/m_p_s_p_10_2_0.abp"
     res = solve(filename)
-    print(res)
-    print(get_obj_val(filename, res))
+    obj_val = get_obj_val(filename, res)
+
+    visualise_res(res, obj_val)
+
 
 if __name__ == "__main__":
     main()

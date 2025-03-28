@@ -1,6 +1,6 @@
 from paper_solve import build_model, solve
 import engines.max_settle_row
-from util import visualise_grid
+from util import visualise_res, print_res
 
 
 def main():
@@ -12,9 +12,10 @@ def main():
     for (p, i) in X:
         X[p, i].Start = (res[i-1] == p)
 
-    res = solve(m, X)
-    print(res)
+    res, obj_val = solve(m, X)
+    print_res(res)
+    visualise_res(res, obj_val)
+
 
 if __name__ == "__main__":
-    visualise_grid([[i*j + j for i in range(10)] for j in range(10)])
     main()

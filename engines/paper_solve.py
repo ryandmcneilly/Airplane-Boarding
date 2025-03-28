@@ -1,6 +1,7 @@
 import gurobipy as gp
 from parse import parse_file
-from util import Passenger, Plane
+from util import Passenger, Plane, visualise_res
+
 
 # passengers_computed = set()
 # def compute_M(P: list[Passenger], p: Passenger, r: int, i: int):
@@ -105,12 +106,15 @@ def solve(m: gp.Model, X: dict[tuple[int, int], gp.Var]):
     result = [None for _ in range(len(set(p for p, i in X)))]
     for (p, i) in X:
             if round(X[p, i].x) == 1:
-                result[i - 1] = (p.row, p.column, p.move_times[0])
-    return result
+                result[i - 1] = p
+    return result, m.objVal
 
 def main():
     m, X = build_model("../data/mp_sp/10_2/m_p_s_p_10_2_0.abp")
-    res = solve(m, X)
+    res, obj_val = solve(m, X)
+
+
+    visualise_res(res, obj_val)
     print(res)
 
 if __name__ == "__main__":
