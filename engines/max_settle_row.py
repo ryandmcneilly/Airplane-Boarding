@@ -1,4 +1,4 @@
-from new import *
+from util import *
 import itertools
 
 class MaxSettleRow(Solver):
@@ -15,7 +15,7 @@ class MaxSettleRow(Solver):
         return AbpSolution(abp, result)
 
 if __name__ == "__main__":
-    abp = AirplaneBoardingProblem("../data/mp_sp/30_6/m_p_s_p_30_6_9.abp")
+    abp = AirplaneBoardingProblem("../data/mp_sp/10_2/m_p_s_p_10_2_0.abp")
 
     mip_solver = MaxSettleRow()
     mip_solution = mip_solver.solve(abp)

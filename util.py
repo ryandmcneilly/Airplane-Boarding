@@ -20,81 +20,6 @@ def time_taken_at_row(p: Passenger, r: int):
     assert "Unreachable"
 
 
-# def build_model(filename: str):
-#     m = gp.Model("Paper Airplane Boarding")
-#
-#     # Sets & Data
-#     Passengers, Plane = parse_file(filename)
-#     Order = range(1, len(Passengers) + 1)
-#     R = range(1, Plane.num_rows + 1)
-#
-#     # Variables
-#     # X[p, i] <=> pi(p) = i
-#     X = {(p, i): m.addVar(vtype=gp.GRB.BINARY) for p in Passengers for i in Order}
-#
-#     # passenger pi^-1(i) arrives at row r
-#     TimeArrival = {
-#         (i, r): m.addVar(vtype=gp.GRB.CONTINUOUS, lb=0) for i in Order for r in R
-#     }
-#     # passenger pi^-1(i) finishes actions at row r
-#     TimeFinish = {
-#         (i, r): m.addVar(vtype=gp.GRB.CONTINUOUS, lb=0) for i in Order for r in R
-#     }
-#
-#     # Makepsan variable. This is bounded below by the last finish time TimeFinish[i, R]
-#     CompletionTime = m.addVar(vtype=gp.GRB.CONTINUOUS, lb=0)
-#
-#     # Objective - Minimise makespan
-#     m.setObjective(CompletionTime, gp.GRB.MINIMIZE)
-#
-#     OrderMustBeFilled = {
-#         i: m.addConstr(gp.quicksum(X[p, i] for p in Passengers) == 1) for i in Order
-#     }
-#
-#     # Constraints
-#     OnePassengerOnePositionInOrder = {
-#         p: m.addConstr(gp.quicksum(X[p, i] for i in Order) == 1) for p in Passengers
-#     }
-#
-#     CompletionTimeSmallestFinish = {
-#         i: m.addConstr(CompletionTime >= TimeFinish[i, Plane.num_rows]) for i in Order
-#     }
-#
-#     ArriveNextRowBeforeCurrent = {
-#         (i, r): m.addConstr(TimeArrival[i, r + 1] - TimeFinish[i, r] >= 0)
-#         for i in Order
-#         for r in R[:-1]  # Not concerned with the last row
-#     }
-#
-#     # M = {(p, r, i): compute_M(Passengers, p, r, i) for p in Passengers for r in R for i in Order}
-#     M = 10**3
-#     VirtualPassing = {
-#         (i, r): m.addConstr(
-#             TimeArrival[i, r + 1] - TimeFinish[i, r]
-#             <= gp.quicksum(M * X[p, i] for p in Passengers if p.row <= r)
-#         )
-#         for i in Order
-#         for r in R[:-1]
-#     }
-#
-#     NaturalAisleOrder = {
-#         (i, r): m.addConstr(TimeArrival[i + 1, r] >= TimeFinish[i, r])
-#         for i in Order[:-1]
-#         for r in R
-#     }
-#
-#     Tau = {(p, r): time_taken_at_row(p, r) for p in Passengers for r in R}
-#     MovementCost = {
-#         (i, r): m.addConstr(
-#             TimeFinish[i, r] - TimeArrival[i, r]
-#             >= gp.quicksum(Tau[p, r] * X[p, i] for p in Passengers)
-#         )
-#         for i in Order
-#         for r in R
-#     }
-#     return m, X
-
-
 class AirplaneBoardingProblem:
     def __init__(self, filename: str):
         self.num_rows = None
@@ -133,7 +58,7 @@ class AirplaneBoardingProblem:
 
         f.close()
 
-def build_model(abp: AirplaneBoardingProblem) -> gp.Model:
+def build_model(abp: AirplaneBoardingProblem) -> (gp.Model, dict[(Passenger, int), gp.Var]):
     m = gp.Model("Paper Airplane Boarding")
 
     # Sets & Data
@@ -301,8 +226,6 @@ def main(*args, **kwargs):
 import json
 
 if __name__ == "__main__":
-    # main(1,2,3,a=1, b=2)
-
     Point = namedtuple("Point", ["x", "y"])
     Triangle = namedtuple("Triangle", ["a", "b", "c"])
     triangle = Triangle(Point(0, 0), Point(0, 1), Point(1, 1))

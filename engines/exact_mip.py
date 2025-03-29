@@ -1,4 +1,4 @@
-from new import *
+from util import *
 
 class MIPSolver(Solver):
     def solve_implementation(self, abp: AirplaneBoardingProblem) -> AbpSolution:
