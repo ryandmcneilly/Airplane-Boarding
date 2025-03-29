@@ -1,43 +1,22 @@
+from new import *
 import itertools
 
-from engines.paper_solve import build_model
-from parse import parse_file
-from util import visualise_res
+class MaxSettleRow(Solver):
+    def solve_implementation(self, abp: AirplaneBoardingProblem) -> AbpSolution:
+        row_groups = [
+            sorted([p for p in abp.passengers if p.row == row], key=lambda p: p.settle_time, reverse=True)
+            for row in range(abp.num_rows, 0, -1)
+        ]
 
+        result = list(itertools.chain.from_iterable(
+            zip(*row_groups)
+        ))
 
-def solve(filename: str):
-    Passengers, Plane = parse_file(filename)
-
-    column_groups = {
-        col : [p for p in Passengers if p.column == col]
-        for col in range(1, Plane.num_cols + 1)
-    }
-
-    num_passengers = sum(len(val) for val in column_groups.values())
-    assert num_passengers == Plane.num_passengers
-
-    # Sort each 'column group' by row
-    result = list(itertools.chain.from_iterable([
-        sorted(passengers, key=lambda p: p.row, reverse=True)
-        for col, passengers in column_groups.items()
-    ]))
-
-    return result
-
-def get_obj_val(filename, result):
-    m, X = build_model(filename)
-    for i, p in enumerate(result, start=1):
-        X[p, i].lb = 1 # force on
-    m.optimize()
-    return m.objVal
-
-def main():
-    filename = "../data/mp_sp/10_2/m_p_s_p_10_2_0.abp"
-    res = solve(filename)
-    obj_val = get_obj_val(filename, res)
-
-    visualise_res(res, obj_val)
-
+        return AbpSolution(abp, result)
 
 if __name__ == "__main__":
-    main()
+    abp = AirplaneBoardingProblem("../data/mp_sp/30_6/m_p_s_p_30_6_9.abp")
+
+    mip_solver = MaxSettleRow()
+    mip_solution = mip_solver.solve(abp)
+    mip_solution.visualise_solution()
