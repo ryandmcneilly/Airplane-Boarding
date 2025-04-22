@@ -25,6 +25,8 @@ class AirplaneBoardingProblem:
         self.num_rows = None
         self.num_cols = None
         self.num_passengers = None
+        self.order = None
+        self.rows = None
 
         self.passengers: list[Passenger | None] = []
 
@@ -56,27 +58,25 @@ class AirplaneBoardingProblem:
             for i in range(0, len(data), 4)
         ]
 
+        self.order = range(1, len(self.passengers) + 1)
+        self.rows = range(1, self.num_rows + 1)
+
         f.close()
 
 def build_model(abp: AirplaneBoardingProblem) -> (gp.Model, dict[(Passenger, int), gp.Var]):
     m = gp.Model("Paper Airplane Boarding")
 
-    # Sets & Data
-    Passengers = abp.passengers
-    Order = range(1, len(Passengers) + 1)
-    R = range(1, abp.num_rows + 1)
-
     # Variables
     # X[p, i] <=> pi(p) = i
-    X = {(p, i): m.addVar(vtype=gp.GRB.BINARY, name=f"X_{p},{i}") for p in Passengers for i in Order}
+    X = {(p, i): m.addVar(vtype=gp.GRB.BINARY, name=f"X_{p},{i}") for p in abp.passengers for i in abp.order}
 
     # passenger pi^-1(i) arrives at row r
     TimeArrival = {
-        (i, r): m.addVar(vtype=gp.GRB.CONTINUOUS, lb=0) for i in Order for r in R
+        (i, r): m.addVar(vtype=gp.GRB.CONTINUOUS, lb=0) for i in abp.order for r in abp.rows
     }
     # passenger pi^-1(i) finishes actions at row r
     TimeFinish = {
-        (i, r): m.addVar(vtype=gp.GRB.CONTINUOUS, lb=0) for i in Order for r in R
+        (i, r): m.addVar(vtype=gp.GRB.CONTINUOUS, lb=0) for i in abp.order for r in abp.rows
     }
 
     # Makepsan variable. This is bounded below by the last finish time TimeFinish[i, R]
@@ -86,50 +86,50 @@ def build_model(abp: AirplaneBoardingProblem) -> (gp.Model, dict[(Passenger, int
     m.setObjective(CompletionTime, gp.GRB.MINIMIZE)
 
     OrderMustBeFilled = {
-        i: m.addConstr(gp.quicksum(X[p, i] for p in Passengers) == 1) for i in Order
+        i: m.addConstr(gp.quicksum(X[p, i] for p in abp.passengers) == 1) for i in abp.order
     }
 
     # Constraints
     OnePassengerOnePositionInOrder = {
-        p: m.addConstr(gp.quicksum(X[p, i] for i in Order) == 1) for p in Passengers
+        p: m.addConstr(gp.quicksum(X[p, i] for i in abp.order) == 1) for p in abp.passengers
     }
 
     CompletionTimeSmallestFinish = {
         i: m.addConstr(CompletionTime >= TimeFinish[i, abp.num_rows])
-        for i in Order
+        for i in abp.order
     }
 
     ArriveNextRowBeforeCurrent = {
         (i, r): m.addConstr(TimeArrival[i, r + 1] - TimeFinish[i, r] >= 0)
-        for i in Order
-        for r in R[:-1]  # Not concerned with the last row
+        for i in abp.order
+        for r in abp.rows[:-1]  # Not concerned with the last row
     }
 
-    # M = {(p, r, i): compute_M(Passengers, p, r, i) for p in Passengers for r in R for i in Order}
+    # M = {(p, r, i): compute_M(abp.passengers, p, r, i) for p in abp.passengers for r in R for i in abp.order}
     M = 10 ** 3
     VirtualPassing = {
         (i, r): m.addConstr(
             TimeArrival[i, r + 1] - TimeFinish[i, r]
-            <= gp.quicksum(M * X[p, i] for p in Passengers if p.row <= r)
+            <= gp.quicksum(M * X[p, i] for p in abp.passengers if p.row <= r)
         )
-        for i in Order
-        for r in R[:-1]
+        for i in abp.order
+        for r in abp.rows[:-1]
     }
 
     NaturalAisleOrder = {
         (i, r): m.addConstr(TimeArrival[i + 1, r] >= TimeFinish[i, r])
-        for i in Order[:-1]
-        for r in R
+        for i in abp.order[:-1]
+        for r in abp.rows
     }
 
-    Tau = {(p, r): time_taken_at_row(p, r) for p in Passengers for r in R}
+    Tau = {(p, r): time_taken_at_row(p, r) for p in abp.passengers for r in abp.rows}
     MovementCost = {
         (i, r): m.addConstr(
             TimeFinish[i, r] - TimeArrival[i, r]
-            >= gp.quicksum(Tau[p, r] * X[p, i] for p in Passengers)
+            >= gp.quicksum(Tau[p, r] * X[p, i] for p in abp.passengers)
         )
-        for i in Order
-        for r in R
+        for i in abp.order
+        for r in abp.rows
     }
 
     return m, X
