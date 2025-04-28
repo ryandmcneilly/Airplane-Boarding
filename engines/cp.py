@@ -22,52 +22,6 @@ class CPSolver(Solver):
         X = {(p, i): m.new_bool_var(name=f"X_{p},{i}") for p in abp.passengers for i in abp.order}
 
         # Makespan variable
-        # CMax = m.new_int_var(0, 100000, name="CMax")
-
-        # Time p arrives r
-        TA = {(p, r):
-            m.new_int_var(
-                lb=earliest_arrival_time_to_row(abp.passengers, r),
-                ub=latest_finish_time_at_row(abp.passengers, r),
-                name=f"TA_{p},{r}")
-            for p in abp.passengers for r in abp.rows
-            if p.row >= r
-        }
-
-        # Interval variable for how long p is at r
-        IPR = {(p, r):
-            m.new_fixed_size_interval_var(
-                   start=TA[p, r],
-                   size=time_taken_at_row(p, r),
-                   name=f"IPR_{p},{r}"
-            )
-            for p in abp.passengers for r in abp.rows
-            if p.row >= r
-        }
-
-        # Ensure no row has two passengers
-        NoOverlapAtRow = {r:
-            m.add_no_overlap(
-                [IPR[p, r] for p in abp.passengers if p.row >= r]
-            ) for r in abp.num_rows
-        }
-
-        # OrderPreserved = { i:
-        #     X[p, i]
-        #     for i in abp.order[1:]
-        # }
-
-
-
-
-class CPSolverIR(Solver):
-    def solve_implementation(self, abp: AirplaneBoardingProblem) -> AbpSolution:
-        m = cp_model.CpModel()
-
-        # If passenger p is allocated to position i
-        X = {(p, i): m.new_bool_var(name=f"X_{p},{i}") for p in abp.passengers for i in abp.order}
-
-        # Makespan variable
         CMax = m.new_int_var(0, 100000, name="CMax")
 
         # Time p arrives r
@@ -135,7 +89,7 @@ class CPSolverIR(Solver):
 if __name__ == "__main__":
     abp = AirplaneBoardingProblem("../data/mp_sp/10_2/m_p_s_p_10_2_0.abp")
 
-    cp_solver = CPSolverIR()
+    cp_solver = CPSolver()
     cp_solution = cp_solver.solve(abp)
     cp_solution.print_solution()
     cp_solution.visualise_solution()
