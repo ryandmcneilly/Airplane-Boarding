@@ -10,7 +10,7 @@ Passenger = namedtuple(
 )
 
 
-def time_taken_at_row(p: Passenger, r: int):
+def time_taken_at_row(p: Passenger, r: int) -> int:
     if r <= p.row - 1:
         return p.move_times[r]
     elif r == p.row:
@@ -63,20 +63,31 @@ class AirplaneBoardingProblem:
 
         f.close()
 
-def build_model(abp: AirplaneBoardingProblem) -> (gp.Model, dict[(Passenger, int), gp.Var]):
+
+def build_model(
+    abp: AirplaneBoardingProblem,
+) -> (gp.Model, dict[(Passenger, int), gp.Var]):
     m = gp.Model("Paper Airplane Boarding")
 
     # Variables
     # X[p, i] <=> pi(p) = i
-    X = {(p, i): m.addVar(vtype=gp.GRB.BINARY, name=f"X_{p},{i}") for p in abp.passengers for i in abp.order}
+    X = {
+        (p, i): m.addVar(vtype=gp.GRB.BINARY, name=f"X_{p},{i}")
+        for p in abp.passengers
+        for i in abp.order
+    }
 
     # passenger pi^-1(i) arrives at row r
     TimeArrival = {
-        (i, r): m.addVar(vtype=gp.GRB.CONTINUOUS, lb=0) for i in abp.order for r in abp.rows
+        (i, r): m.addVar(vtype=gp.GRB.CONTINUOUS, lb=0)
+        for i in abp.order
+        for r in abp.rows
     }
     # passenger pi^-1(i) finishes actions at row r
     TimeFinish = {
-        (i, r): m.addVar(vtype=gp.GRB.CONTINUOUS, lb=0) for i in abp.order for r in abp.rows
+        (i, r): m.addVar(vtype=gp.GRB.CONTINUOUS, lb=0)
+        for i in abp.order
+        for r in abp.rows
     }
 
     # Makepsan variable. This is bounded below by the last finish time TimeFinish[i, R]
@@ -86,17 +97,18 @@ def build_model(abp: AirplaneBoardingProblem) -> (gp.Model, dict[(Passenger, int
     m.setObjective(CompletionTime, gp.GRB.MINIMIZE)
 
     OrderMustBeFilled = {
-        i: m.addConstr(gp.quicksum(X[p, i] for p in abp.passengers) == 1) for i in abp.order
+        i: m.addConstr(gp.quicksum(X[p, i] for p in abp.passengers) == 1)
+        for i in abp.order
     }
 
     # Constraints
     OnePassengerOnePositionInOrder = {
-        p: m.addConstr(gp.quicksum(X[p, i] for i in abp.order) == 1) for p in abp.passengers
+        p: m.addConstr(gp.quicksum(X[p, i] for i in abp.order) == 1)
+        for p in abp.passengers
     }
 
     CompletionTimeSmallestFinish = {
-        i: m.addConstr(CompletionTime >= TimeFinish[i, abp.num_rows])
-        for i in abp.order
+        i: m.addConstr(CompletionTime >= TimeFinish[i, abp.num_rows]) for i in abp.order
     }
 
     ArriveNextRowBeforeCurrent = {
@@ -106,7 +118,7 @@ def build_model(abp: AirplaneBoardingProblem) -> (gp.Model, dict[(Passenger, int
     }
 
     # M = {(p, r, i): compute_M(abp.passengers, p, r, i) for p in abp.passengers for r in R for i in abp.order}
-    M = 10 ** 3
+    M = 10**3
     VirtualPassing = {
         (i, r): m.addConstr(
             TimeArrival[i, r + 1] - TimeFinish[i, r]
@@ -135,9 +147,14 @@ def build_model(abp: AirplaneBoardingProblem) -> (gp.Model, dict[(Passenger, int
     return m, X
 
 
-
 class AbpSolution:
-    def __init__(self, problem: AirplaneBoardingProblem, ordering: list[Passenger | None], *, makespan=None):
+    def __init__(
+        self,
+        problem: AirplaneBoardingProblem,
+        ordering: list[Passenger | None],
+        *,
+        makespan=None,
+    ):
         self.problem = problem
         self.ordering = ordering
 
@@ -164,9 +181,17 @@ class AbpSolution:
         mid_col = (num_cols // 2) + 1  # Determine where to insert the empty column
 
         # Create grid with an empty column in the middle
-        grid = [[mapping.get((row, col if col < mid_col else col - 1), None) if col != mid_col else None
-                 for col in range(1, num_cols + 2)]
-                for row in range(1, num_rows + 1)]
+        grid = [
+            [
+                (
+                    mapping.get((row, col if col < mid_col else col - 1), None)
+                    if col != mid_col
+                    else None
+                )
+                for col in range(1, num_cols + 2)
+            ]
+            for row in range(1, num_rows + 1)
+        ]
 
         unique_chars = {char for row in grid for char in row if char is not None}
         color_map = {char: mcolors.CSS4_COLORS.get("pink") for char in unique_chars}
@@ -183,22 +208,36 @@ class AbpSolution:
         for i in range(n_rows):
             for j in range(n_cols):
                 char = grid[i][j]
-                color = color_map.get(char, empty_col_color) if char is not None else empty_col_color
+                color = (
+                    color_map.get(char, empty_col_color)
+                    if char is not None
+                    else empty_col_color
+                )
                 ax.add_patch(plt.Rectangle((j, n_rows - i - 1), 1, 1, color=color))
                 if char is not None:
-                    ax.text(j + 0.5, n_rows - i - 1 + 0.5, char, ha='center', va='center', fontsize=12,
-                            color='black')
+                    ax.text(
+                        j + 0.5,
+                        n_rows - i - 1 + 0.5,
+                        char,
+                        ha="center",
+                        va="center",
+                        fontsize=12,
+                        color="black",
+                    )
 
         # Make plot look pretty
         ax.set_xlim(0, n_cols)
         ax.set_ylim(0, n_rows)
         ax.set_xticks([])
         ax.set_yticks([])
-        ax.set_aspect('equal')
+        ax.set_aspect("equal")
         plt.show()
 
     def print_solution(self):
-        [print(i, (p.row, p.column, p.move_times[0], p.settle_time)) for i, p in enumerate(self.ordering)]
+        [
+            print(i, (p.row, p.column, p.move_times[0], p.settle_time))
+            for i, p in enumerate(self.ordering)
+        ]
 
 
 class Solver(ABC):
@@ -210,10 +249,7 @@ class Solver(ABC):
         return solution
 
     @abstractmethod
-    def solve_implementation(
-        self, abp: AirplaneBoardingProblem
-    ) -> AbpSolution:
-        ...
+    def solve_implementation(self, abp: AirplaneBoardingProblem) -> AbpSolution: ...
 
 
 def main(*args, **kwargs):
