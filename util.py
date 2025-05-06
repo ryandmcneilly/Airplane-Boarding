@@ -171,6 +171,35 @@ class AbpSolution:
 
         return m.objVal
 
+    def simulate_seating(self):
+        abp = self.problem
+        passenger_seated_times = [0 for _ in range(abp.num_passengers)]
+        # Time a passenger enters a row
+        passenger_enter_row = []
+        # Stores the latest time a passenger has been in that row (blocking)
+        row_blockage = [0 for _ in range(abp.num_rows)]
+
+        for i, p in enumerate(self.ordering):
+            passenger_enter_row.append([0 for _ in range(p.row + 1)])
+
+            for row in range(p.row+1):
+                # Maximum of either passenger moving or when the row becomes free
+                passenger_enter_row[i][row] = (
+                    row_blockage[0] if row == 0 else max(passenger_enter_row[i][row-1] + p.move_times[row - 1], row_blockage[row])
+                )
+
+                if row > 0:
+                    row_blockage[row - 1] = passenger_enter_row[i][row]
+
+                if row == p.row:
+                    passenger_seated_time = passenger_enter_row[i][row] + p.settle_time
+                    row_blockage[row] = passenger_seated_time
+                    passenger_seated_times[i] = passenger_seated_time
+
+        makespan = max(passenger_seated_times, default=0)
+        return makespan
+
+
     def visualise_solution(self):
         self.print_solution()
         mapping = {(p.row, p.column): i for i, p in enumerate(self.ordering)}
