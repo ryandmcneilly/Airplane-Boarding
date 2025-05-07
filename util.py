@@ -12,7 +12,7 @@ Passenger = namedtuple(
 
 def time_taken_at_row(p: Passenger, r: int) -> int:
     if r <= p.row - 1:
-        return p.move_times[r]
+        return p.move_times[r-1]
     elif r == p.row:
         return p.settle_time
     elif r >= p.row + 1:
@@ -177,7 +177,7 @@ class AbpSolution:
         # Time a passenger enters a row
         passenger_enter_row = []
         # Stores the latest time a passenger has been in that row (blocking)
-        row_blockage = [0 for _ in range(abp.num_rows)]
+        row_blockage = [0 for _ in range(abp.num_rows+1)]
 
         for i, p in enumerate(self.ordering):
             passenger_enter_row.append([0 for _ in range(p.row + 1)])
@@ -278,20 +278,4 @@ class Solver(ABC):
         return solution
 
     @abstractmethod
-    def solve_implementation(self, abp: AirplaneBoardingProblem) -> AbpSolution: ...
-
-
-def main(*args, **kwargs):
-    for arg in args:
-        print(arg)
-    for k, w in kwargs.items():
-        print(k, w)
-
-
-import json
-
-if __name__ == "__main__":
-    Point = namedtuple("Point", ["x", "y"])
-    Triangle = namedtuple("Triangle", ["a", "b", "c"])
-    triangle = Triangle(Point(0, 0), Point(0, 1), Point(1, 1))
-    print(json.dumps(triangle._asdict()))
+    def solve_implementation(self, abp: AirplaneBoardingProblem, ) -> AbpSolution: ...
