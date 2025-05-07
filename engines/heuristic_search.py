@@ -13,4 +13,6 @@ def get_best_heuristic(abp: AirplaneBoardingProblem) -> tuple[int, list[Passenge
         if heuristic_makespan < makespan:
             makespan, ordering = heuristic_makespan, solution.ordering
 
+        print(Heuristic.__name__, f"found solution with {heuristic_makespan:.0f} makespan")
+
     return int(makespan), ordering

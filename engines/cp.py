@@ -1,6 +1,6 @@
 from ortools.sat.python import cp_model
 
-from engines.exact_mip import MIPSolver
+from engines.heuristic_search import get_best_heuristic
 from util import (
     Solver,
     AirplaneBoardingProblem,
@@ -15,7 +15,7 @@ def earliest_arrival_time_to_row(passengers: list[Passenger], row: int) -> int:
     return min(
         sum(
             time_taken_at_row(passenger, r) for r in range(row)
-        )  # Dont want to include time taken at that row, just the cumsum to get to it
+        )  # Do not want to include time taken at that row, just the cumsum to get to it
         for passenger in passengers
         if passenger.row
         >= row  # We only care about passengers that will go to that row
@@ -27,26 +27,24 @@ def latest_finish_time_at_row(passengers: list[Passenger], row: int) -> int:
 
 
 class CPSolver(Solver):
-    # The difference of this one is that we are changing the model to
-    # have finish times TF_{p, r} and I_{p, r}, completely removing the idea
-    # of boarding sequence.
     def solve_implementation(self, abp: AirplaneBoardingProblem) -> AbpSolution:
         m = cp_model.CpModel()
 
+        heuristic_makespan, heuristic_solution = get_best_heuristic(abp)
+
         R0 = [0] + list(abp.rows)
 
-        # Variables
-        CMax = m.new_int_var(0, 100000, name="CMax")
-        # TODO: change the lb to use earliest_arrival_time_at_row and
-        #  ub to the best heuristic solution
+        # Variables --------------------------------------
+        CMax = m.new_int_var(lb=0, ub=heuristic_makespan, name="CMax")
+
         TF = {
-            (p, r): m.new_int_var(lb=0, ub=100000, name=f"TF_({p.row},{p.column}),{r}")
+            (p, r): m.new_int_var(lb=0, ub=heuristic_makespan, name=f"TF_({p.row},{p.column}),{r}")
             for p in abp.passengers
             for r in R0
         }
 
         W = {
-            (p, r): m.new_int_var(lb=0, ub=100000, name=f"W_{p}, {r}")
+            (p, r): m.new_int_var(lb=0, ub=heuristic_makespan, name=f"W_({p.row},{p.column}), {r}")
             for p in abp.passengers
             for r in R0
             if r <= p.row
@@ -54,13 +52,14 @@ class CPSolver(Solver):
 
         I = {
             (p, r): m.new_interval_var(
-                start=TF[p, r - 1], end=TF[p, r], size=W[p, r], name=f"I_{p},{r}"
+                start=TF[p, r - 1], end=TF[p, r], size=W[p, r], name=f"I_({p.row},{p.column}),{r}"
             )
             for p in abp.passengers
             for r in abp.rows
             if r <= p.row
         }
 
+        # Subject to --------------------------------------
         SetW = {
             (p, r): m.add(W[p, r] == TF[p, r] - TF[p, r - 1])
             for p in abp.passengers
@@ -87,11 +86,11 @@ class CPSolver(Solver):
 
         SetMakeSpan = m.add_max_equality(CMax, TF.values())
 
-        # Objective
+        # Objective --------------------------------------
         m.minimize(CMax)
 
+        # Result --------------------------------------
         solver = cp_model.CpSolver()
-        solver.parameters.log_search_progress = True
         solver.solve(m)
 
         result = [
@@ -105,25 +104,9 @@ class CPSolver(Solver):
 
 
 if __name__ == "__main__":
-    # cp_times = []
-    # mip_times = []
-    # for file in range(4):
-    #
-    #     cp_time = cp_solution.computation_time
-    #     cp_times.append(cp_time)
-    #
-    #     mip_solver = MIPSolver()
-    #     mip_solution = mip_solver.solve(abp)
-    #     mip_time = mip_solution.computation_time
-    #     mip_times.append(mip_time)
-    #
-    # print("No Heuristic CP Times", cp_times)
-    # print("No 2-opt or Heuristic MIP Times", mip_times)
-
-    abp = AirplaneBoardingProblem(f"../data/mp_sp/30_6/m_p_s_p_30_6_9.abp")
+    abp = AirplaneBoardingProblem(f"../data/mp_sp/10_2/m_p_s_p_10_2_0.abp")
     cp_solver = CPSolver()
 
     cp_solution = cp_solver.solve(abp)
-    print(cp_solution.computation_time)
-    cp_solution.print_solution()
-    cp_solution.visualise_solution()
+    print(f"Solved in {cp_solution.computation_time:.2f}s")
+    print("Makespan", cp_solution.makespan)
