@@ -12,7 +12,7 @@ Passenger = namedtuple(
 
 def time_taken_at_row(p: Passenger, r: int) -> int:
     if r <= p.row - 1:
-        return p.move_times[r-1]
+        return p.move_times[r - 1]
     elif r == p.row:
         return p.settle_time
     elif r >= p.row + 1:
@@ -22,17 +22,6 @@ def time_taken_at_row(p: Passenger, r: int) -> int:
 
 class AirplaneBoardingProblem:
     def __init__(self, filename: str):
-        self.num_rows = None
-        self.num_cols = None
-        self.num_passengers = None
-        self.order = None
-        self.rows = None
-
-        self.passengers: list[Passenger | None] = []
-
-        self.parse_file(filename)
-
-    def parse_file(self, filename: str):
         f = open(filename, "r")
         data = f.readlines()
 
@@ -178,15 +167,20 @@ class AbpSolution:
         # Time a passenger enters a row
         passenger_enter_row = []
         # Stores the latest time a passenger has been in that row (blocking)
-        row_blockage = [0 for _ in range(abp.num_rows+1)]
+        row_blockage = [0 for _ in range(abp.num_rows + 1)]
 
         for i, p in enumerate(self.ordering):
             passenger_enter_row.append([0 for _ in range(p.row + 1)])
 
-            for row in range(p.row+1):
+            for row in range(p.row + 1):
                 # Maximum of either passenger moving or when the row becomes free
                 passenger_enter_row[i][row] = (
-                    row_blockage[0] if row == 0 else max(passenger_enter_row[i][row-1] + p.move_times[row-2], row_blockage[row])
+                    row_blockage[0]
+                    if row == 0
+                    else max(
+                        passenger_enter_row[i][row - 1] + p.move_times[row - 2],
+                        row_blockage[row],
+                    )
                 )
 
                 if row > 0:
@@ -199,7 +193,6 @@ class AbpSolution:
 
         makespan = max(passenger_seated_times, default=0)
         return makespan
-
 
     def visualise_solution(self):
         self.print_solution()
@@ -279,4 +272,7 @@ class Solver(ABC):
         return solution
 
     @abstractmethod
-    def solve_implementation(self, abp: AirplaneBoardingProblem, ) -> AbpSolution: ...
+    def solve_implementation(
+        self,
+        abp: AirplaneBoardingProblem,
+    ) -> AbpSolution: ...
