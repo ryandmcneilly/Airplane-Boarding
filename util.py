@@ -144,6 +144,7 @@ def build_model(
         for r in abp.rows
     }
 
+    m.setParam("OutputFlag", 0)
     return m, X
 
 
@@ -159,7 +160,7 @@ class AbpSolution:
         self.ordering = ordering
 
         self.computation_time = None
-        self.makespan = makespan or self._calc_makespan()
+        self.makespan = makespan or self.simulate_seating()
 
     def _calc_makespan(self):
         m, X = build_model(self.problem)
@@ -185,7 +186,7 @@ class AbpSolution:
             for row in range(p.row+1):
                 # Maximum of either passenger moving or when the row becomes free
                 passenger_enter_row[i][row] = (
-                    row_blockage[0] if row == 0 else max(passenger_enter_row[i][row-1] + p.move_times[row - 1], row_blockage[row])
+                    row_blockage[0] if row == 0 else max(passenger_enter_row[i][row-1] + p.move_times[row-2], row_blockage[row])
                 )
 
                 if row > 0:
