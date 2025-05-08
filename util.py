@@ -1,3 +1,4 @@
+import json
 from collections import namedtuple
 from abc import ABC, abstractmethod
 import time
@@ -23,35 +24,28 @@ def time_taken_at_row(p: Passenger, r: int) -> int:
 class AirplaneBoardingProblem:
     def __init__(self, filename: str):
         f = open(filename, "r")
-        data = f.readlines()
+        json_data = json.load(f)
+        self.num_rows: int = len(json_data["n_seats_row"])
+        self.num_cols: int = len(json_data["n_seats_row"][0])
+        self.num_passengers: int = len(json_data["times_move"])
 
-        self.num_rows = int(data[0].split(" ")[1])
-        self.num_cols = int(data[1].split(" ")[1])
-        self.num_passengers = int(data[2].split(" ")[1])
-
-        data = data[3:]
-
-        self.passengers = [
+        self.passengers: list[Passenger] = [
             Passenger(
-                id=i // 4,
-                row=int(data[i].split(" ")[1]),
-                column=int(data[i + 1].split(" ")[1]),
-                settle_time=float(data[i + 2].split(" ")[1]),
-                move_times=(
-                    given_times := tuple(
-                        float(time) for time in data[i + 3].split(" ")[1:]
-                    )
-                )
-                + tuple(0 for _ in range(self.num_rows - len(given_times))),
+                id=i,
+                row=json_data["pax_seats"][i][0] + 1,
+                column=json_data["pax_seats"][i][1] + 1,
+                settle_time=int(10 * json_data["times_clear"][i]),
+                move_times=(given_times := tuple(
+                    10 * m_time for m_time in json_data["times_move"][i]
+                )) + tuple(0 for _ in range(self.num_rows - len(given_times))),
             )
-            for i in range(0, len(data), 4)
+            for i in range(self.num_passengers)
         ]
 
         self.order = range(1, len(self.passengers) + 1)
         self.rows = range(1, self.num_rows + 1)
 
         f.close()
-
 
 class AbpSolution:
     def __init__(
@@ -67,36 +61,34 @@ class AbpSolution:
         self.computation_time = None
         self.makespan = makespan or self.simulate_boarding()
 
-    def parse_json(self, filename: str):
-        ...
 
-    def simulate_boarding(self):
+    def simulate_boarding(self) -> int:
         abp = self.problem
         passenger_seated_times = [0 for _ in range(abp.num_passengers)]
         # Time a passenger enters a row
-        passenger_enter_row = []
+        self.passenger_enter_row = []
         # Stores the latest time a passenger has been in that row (blocking)
         row_blockage = [0 for _ in range(abp.num_rows + 1)]
 
         for i, p in enumerate(self.ordering):
-            passenger_enter_row.append([0 for _ in range(p.row + 1)])
+            self.passenger_enter_row.append([0 for _ in range(p.row + 1)])
 
             for row in range(p.row + 1):
                 # Maximum of either passenger moving or when the row becomes free
-                passenger_enter_row[i][row] = (
+                self.passenger_enter_row[i][row] = (
                     row_blockage[0]
                     if row == 0
                     else max(
-                        passenger_enter_row[i][row - 1] + p.move_times[row - 2],
+                        self.passenger_enter_row[i][row - 1] + p.move_times[row - 2],
                         row_blockage[row],
                     )
                 )
 
                 if row > 0:
-                    row_blockage[row - 1] = passenger_enter_row[i][row]
+                    row_blockage[row - 1] = self.passenger_enter_row[i][row]
 
                 if row == p.row:
-                    passenger_seated_time = passenger_enter_row[i][row] + p.settle_time
+                    passenger_seated_time = self.passenger_enter_row[i][row] + p.settle_time
                     row_blockage[row] = passenger_seated_time
                     passenger_seated_times[i] = passenger_seated_time
 
@@ -173,7 +165,7 @@ class AbpSolution:
 
 
 class Solver(ABC):
-    def solve(self, abp: AirplaneBoardingProblem):
+    def solve(self, abp: AirplaneBoardingProblem) -> AbpSolution:
         start = time.time()
         solution = self.solve_implementation(abp)
         solution.computation_time = time.time() - start

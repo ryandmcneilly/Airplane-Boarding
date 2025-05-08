@@ -15,7 +15,7 @@ class MaxSettleRow(Solver):
         return AbpSolution(abp, result)
 
 if __name__ == "__main__":
-    abp = AirplaneBoardingProblem("../data/mp_sp/10_2/m_p_s_p_10_2_0.abp")
+    abp = AirplaneBoardingProblem(f"../data/mp_sp/10_2/mp_sp__10_2__0.json")
 
     mip_solver = MaxSettleRow()
     mip_solution = mip_solver.solve(abp)

@@ -29,13 +29,17 @@ class CPSolver(Solver):
 
         # Variables --------------------------------------
         CMax = m.new_int_var(lb=max(earliest_finish_time_to_row(p, abp.num_rows) for p in abp.passengers), ub=heuristic_makespan, name="CMax")
+        m.add_hint(CMax, heuristic_makespan)
 
-        # result from sim
         TF = {
             (p, r): m.new_int_var(lb=earliest_finish_time_to_row(p, r) if r <= p.row else 0, ub=heuristic_makespan, name=f"TF_({p.row},{p.column}),{r}")
             for p in abp.passengers
             for r in R0
         }
+        for i, p in enumerate(heuristic_solution.ordering):
+            for r in range(p.row):
+                m.add_hint(TF[p, r], heuristic_solution.passenger_enter_row[i][r+1])
+
 
         W = {
             (p, r): m.new_int_var(lb=0, ub=heuristic_makespan, name=f"W_({p.row},{p.column}), {r}")
@@ -85,6 +89,7 @@ class CPSolver(Solver):
 
         # Result --------------------------------------
         solver = cp_model.CpSolver()
+        solver.parameters.log_search_progress = True
         solver.solve(m)
 
         result = [
@@ -98,7 +103,7 @@ class CPSolver(Solver):
 
 
 if __name__ == "__main__":
-    abp = AirplaneBoardingProblem(f"../data/mp_sp/20_2/m_p_s_p_20_2_0.abp")
+    abp = AirplaneBoardingProblem(f"../data/mp_sp/10_2/mp_sp__10_2__1.json")
     cp_solver = CPSolver()
 
     cp_solution = cp_solver.solve(abp)

@@ -1,18 +1,18 @@
 from engines.max_settle_row import MaxSettleRow
 from engines.outside_in_btf import OutsideInBTF
 from engines.random_ordering import RandomSolver
-from util import AirplaneBoardingProblem, Passenger
+from util import AirplaneBoardingProblem, Passenger, AbpSolution
 
 
-def get_best_heuristic(abp: AirplaneBoardingProblem) -> tuple[int, list[Passenger]]:
+def get_best_heuristic(abp: AirplaneBoardingProblem) -> tuple[int, AbpSolution]:
     makespan: float = float("inf")
-    ordering: list[Passenger] = ...
+    solution: AbpSolution = ...
+
     for Heuristic in [MaxSettleRow, OutsideInBTF, RandomSolver]:
-        solution = Heuristic().solve(abp)
-        heuristic_makespan = solution.simulate_boarding()
-        if heuristic_makespan < makespan:
-            makespan, ordering = heuristic_makespan, solution.ordering
+        heuristic_solution: AbpSolution = Heuristic().solve(abp)
+        if heuristic_solution.makespan < makespan:
+            makespan, solution = heuristic_solution.makespan, heuristic_solution
 
-        print(Heuristic.__name__, f"found solution with {heuristic_makespan:.0f} makespan")
+        print(Heuristic.__name__, f"found solution with {heuristic_solution.makespan:.0f} makespan")
 
-    return int(makespan), ordering
+    return int(makespan), solution

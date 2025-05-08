@@ -6,7 +6,8 @@ class MIPSolver(Solver):
     def solve_implementation(self, abp: AirplaneBoardingProblem) -> AbpSolution:
         m = gp.Model("Paper Airplane Boarding")
 
-        heuristic_makespan, heuristic_solution = two_opt_search(abp, *get_best_heuristic(abp))
+
+        heuristic_makespan, heuristic_solution = get_best_heuristic(abp)
 
         # Variables --------------------------------------
         X = {
@@ -17,7 +18,7 @@ class MIPSolver(Solver):
 
         # Hot start solution with best heuristic
         for p, i in X:
-            X[p, i].Start = heuristic_solution[i - 1] == p
+            X[p, i].Start = heuristic_solution.ordering[i - 1] == p
 
 
         TimeArrival = {
@@ -25,6 +26,13 @@ class MIPSolver(Solver):
             for i in abp.order
             for r in abp.rows
         }
+        for i, p in enumerate(heuristic_solution.ordering):
+            last_arrival = max(heuristic_solution.passenger_enter_row[i])
+            for r in abp.rows:
+                if r <= p.row:
+                    TimeArrival[i+1, r].Start = heuristic_solution.passenger_enter_row[i][r]
+                else:
+                    TimeArrival[i + 1, r].Start = last_arrival
 
         TimeFinish = {
             (i, r): m.addVar(vtype=gp.GRB.CONTINUOUS)
@@ -96,7 +104,7 @@ class MIPSolver(Solver):
 
 
 if __name__ == "__main__":
-    abp = AirplaneBoardingProblem("../data/mp_sp/10_2/m_p_s_p_10_2_4.abp")
+    abp = AirplaneBoardingProblem(f"../data/mp_sp/10_2/mp_sp__10_2__1.json")
 
     mip_solver = MIPSolver()
     mip_solution = mip_solver.solve(abp)
