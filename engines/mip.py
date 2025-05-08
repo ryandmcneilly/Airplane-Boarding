@@ -7,7 +7,8 @@ class MIPSolver(Solver):
         m = gp.Model("Paper Airplane Boarding")
 
 
-        heuristic_makespan, heuristic_solution = get_best_heuristic(abp)
+        heuristic_solution = get_best_heuristic(abp)
+        heuristic_solution = two_opt_search(abp, heuristic_solution)
 
         # Variables --------------------------------------
         X = {
@@ -70,7 +71,7 @@ class MIPSolver(Solver):
         VirtualPassing = {
             (i, r): m.addConstr(
                 TimeArrival[i, r + 1] - TimeFinish[i, r]
-                <= gp.quicksum(heuristic_makespan * X[p, i] for p in abp.passengers if p.row <= r)
+                <= gp.quicksum(heuristic_solution.makespan * X[p, i] for p in abp.passengers if p.row <= r)
             )
             for i in abp.order
             for r in abp.rows[:-1]
@@ -92,7 +93,6 @@ class MIPSolver(Solver):
             for r in abp.rows
         }
 
-        m.params.OutputFlag = 0
         m.optimize()
 
         result = [None for _ in range(len(set(p for p, i in X)))]

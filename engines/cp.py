@@ -1,6 +1,7 @@
 from ortools.sat.python import cp_model
 
 from engines.heuristic_search import get_best_heuristic
+from engines.two_opt_search import two_opt_search
 from util import (
     Solver,
     AirplaneBoardingProblem,
@@ -23,16 +24,17 @@ class CPSolver(Solver):
     def solve_implementation(self, abp: AirplaneBoardingProblem) -> AbpSolution:
         m = cp_model.CpModel()
 
-        heuristic_makespan, heuristic_solution = get_best_heuristic(abp)
+        heuristic_solution = get_best_heuristic(abp)
+        heuristic_solution = two_opt_search(abp, heuristic_solution)
 
         R0 = [0] + list(abp.rows)
 
         # Variables --------------------------------------
-        CMax = m.new_int_var(lb=max(earliest_finish_time_to_row(p, abp.num_rows) for p in abp.passengers), ub=heuristic_makespan, name="CMax")
-        m.add_hint(CMax, heuristic_makespan)
+        CMax = m.new_int_var(lb=max(earliest_finish_time_to_row(p, abp.num_rows) for p in abp.passengers), ub=heuristic_solution.makespan, name="CMax")
+        m.add_hint(CMax, heuristic_solution.makespan)
 
         TF = {
-            (p, r): m.new_int_var(lb=earliest_finish_time_to_row(p, r) if r <= p.row else 0, ub=heuristic_makespan, name=f"TF_({p.row},{p.column}),{r}")
+            (p, r): m.new_int_var(lb=earliest_finish_time_to_row(p, r) if r <= p.row else 0, ub=heuristic_solution.makespan, name=f"TF_({p.row},{p.column}),{r}")
             for p in abp.passengers
             for r in R0
         }
@@ -42,7 +44,7 @@ class CPSolver(Solver):
 
 
         W = {
-            (p, r): m.new_int_var(lb=0, ub=heuristic_makespan, name=f"W_({p.row},{p.column}), {r}")
+            (p, r): m.new_int_var(lb=0, ub=heuristic_solution.makespan, name=f"W_({p.row},{p.column}), {r}")
             for p in abp.passengers
             for r in R0
             if r <= p.row

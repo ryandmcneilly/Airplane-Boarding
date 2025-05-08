@@ -1,25 +1,24 @@
 from util import Passenger, AbpSolution, AirplaneBoardingProblem
 
 
-def two_opt_search(abp: AirplaneBoardingProblem, makespan: int, solution: list[Passenger]):
+def two_opt_search(abp: AirplaneBoardingProblem, solution: AbpSolution):
     found_improvement = True
+    curr_solution = AbpSolution(solution.problem, solution.ordering, makespan=solution.makespan)
 
     while found_improvement:
         found_improvement = False
-        for i in range(len(solution)):
-            for j in range(i+1, len(solution)):
-                new_solution = solution.copy()
-
+        for i in range(len(curr_solution.ordering)):
+            for j in range(i+1, len(curr_solution.ordering)):
                 # Swap positions
-                new_solution[i], new_solution[j] = new_solution[j], new_solution[i]
+                new_ordering = curr_solution.ordering.copy()
+                new_ordering[i], new_ordering[j] = new_ordering[j], new_ordering[i]
 
-                new_makespan = AbpSolution(abp, solution).simulate_boarding()
-                if new_makespan < makespan:
-                    print(f"Found a better solution in 2-opt: {makespan} -> {new_makespan}")
-                    makespan = new_makespan
+                new_solution = AbpSolution(abp, new_ordering)
+                if new_solution.makespan < curr_solution.makespan:
+                    print(f"Found a better solution in 2-opt: {curr_solution.makespan} -> {new_solution.makespan}")
                     solution = new_solution
                     found_improvement =  True
 
-    return makespan, solution
+    return solution
 
 

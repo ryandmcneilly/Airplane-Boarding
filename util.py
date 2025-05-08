@@ -93,7 +93,7 @@ class AbpSolution:
                     passenger_seated_times[i] = passenger_seated_time
 
         makespan = max(passenger_seated_times, default=0)
-        return makespan
+        return int(makespan)
 
     def visualise_solution(self):
         self.print_solution()

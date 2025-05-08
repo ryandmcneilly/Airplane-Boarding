@@ -4,7 +4,7 @@ from engines.random_ordering import RandomSolver
 from util import AirplaneBoardingProblem, Passenger, AbpSolution
 
 
-def get_best_heuristic(abp: AirplaneBoardingProblem) -> tuple[int, AbpSolution]:
+def get_best_heuristic(abp: AirplaneBoardingProblem) -> AbpSolution:
     makespan: float = float("inf")
     solution: AbpSolution = ...
 
@@ -15,4 +15,4 @@ def get_best_heuristic(abp: AirplaneBoardingProblem) -> tuple[int, AbpSolution]:
 
         print(Heuristic.__name__, f"found solution with {heuristic_solution.makespan:.0f} makespan")
 
-    return int(makespan), solution
+    return solution
