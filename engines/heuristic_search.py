@@ -9,7 +9,7 @@ def get_best_heuristic(abp: AirplaneBoardingProblem) -> tuple[int, list[Passenge
     ordering: list[Passenger] = ...
     for Heuristic in [MaxSettleRow, OutsideInBTF, RandomSolver]:
         solution = Heuristic().solve(abp)
-        heuristic_makespan = solution.simulate_seating()
+        heuristic_makespan = solution.simulate_boarding()
         if heuristic_makespan < makespan:
             makespan, ordering = heuristic_makespan, solution.ordering
 

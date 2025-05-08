@@ -10,20 +10,13 @@ from util import (
 )
 
 
-def earliest_arrival_time_to_row(passengers: list[Passenger], row: int) -> int:
+def earliest_finish_time_to_row(passenger: Passenger, row: int) -> int:
     # Smallest arrival time for any passenger to that given row
-    return min(
-        sum(
-            time_taken_at_row(passenger, r) for r in range(row)
-        )  # Do not want to include time taken at that row, just the cumsum to get to it
-        for passenger in passengers
-        if passenger.row
-        >= row  # We only care about passengers that will go to that row
-    )
+    return int(sum(
+        time_taken_at_row(passenger, r) for r in range(1, row + 1)
+    ))
 
 
-def latest_finish_time_at_row(passengers: list[Passenger], row: int) -> int:
-    return 1000  # fix this
 
 
 class CPSolver(Solver):
@@ -35,10 +28,11 @@ class CPSolver(Solver):
         R0 = [0] + list(abp.rows)
 
         # Variables --------------------------------------
-        CMax = m.new_int_var(lb=0, ub=heuristic_makespan, name="CMax")
+        CMax = m.new_int_var(lb=max(earliest_finish_time_to_row(p, abp.num_rows) for p in abp.passengers), ub=heuristic_makespan, name="CMax")
 
+        # result from sim
         TF = {
-            (p, r): m.new_int_var(lb=0, ub=heuristic_makespan, name=f"TF_({p.row},{p.column}),{r}")
+            (p, r): m.new_int_var(lb=earliest_finish_time_to_row(p, r) if r <= p.row else 0, ub=heuristic_makespan, name=f"TF_({p.row},{p.column}),{r}")
             for p in abp.passengers
             for r in R0
         }
@@ -104,7 +98,7 @@ class CPSolver(Solver):
 
 
 if __name__ == "__main__":
-    abp = AirplaneBoardingProblem(f"../data/mp_sp/10_2/m_p_s_p_10_2_0.abp")
+    abp = AirplaneBoardingProblem(f"../data/mp_sp/20_2/m_p_s_p_20_2_0.abp")
     cp_solver = CPSolver()
 
     cp_solution = cp_solver.solve(abp)

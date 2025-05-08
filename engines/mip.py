@@ -1,11 +1,12 @@
 from engines.heuristic_search import get_best_heuristic
+from engines.two_opt_search import two_opt_search
 from util import *
 
 class MIPSolver(Solver):
     def solve_implementation(self, abp: AirplaneBoardingProblem) -> AbpSolution:
         m = gp.Model("Paper Airplane Boarding")
 
-        heuristic_makespan, heuristic_solution = get_best_heuristic(abp)
+        heuristic_makespan, heuristic_solution = two_opt_search(abp, *get_best_heuristic(abp))
 
         # Variables --------------------------------------
         X = {
@@ -83,7 +84,7 @@ class MIPSolver(Solver):
             for r in abp.rows
         }
 
-        m.setParam("OutputFlag", 0)
+        m.params.OutputFlag = 0
         m.optimize()
 
         result = [None for _ in range(len(set(p for p, i in X)))]
@@ -95,7 +96,7 @@ class MIPSolver(Solver):
 
 
 if __name__ == "__main__":
-    abp = AirplaneBoardingProblem("../data/mp_sp/10_2/m_p_s_p_10_2_0.abp")
+    abp = AirplaneBoardingProblem("../data/mp_sp/10_2/m_p_s_p_10_2_4.abp")
 
     mip_solver = MIPSolver()
     mip_solution = mip_solver.solve(abp)

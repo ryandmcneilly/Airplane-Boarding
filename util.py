@@ -53,90 +53,6 @@ class AirplaneBoardingProblem:
         f.close()
 
 
-def build_model(
-    abp: AirplaneBoardingProblem,
-) -> (gp.Model, dict[(Passenger, int), gp.Var]):
-    m = gp.Model("Paper Airplane Boarding")
-
-    # Variables
-    # X[p, i] <=> pi(p) = i
-    X = {
-        (p, i): m.addVar(vtype=gp.GRB.BINARY, name=f"X_{p},{i}")
-        for p in abp.passengers
-        for i in abp.order
-    }
-
-    # passenger pi^-1(i) arrives at row r
-    TimeArrival = {
-        (i, r): m.addVar(vtype=gp.GRB.CONTINUOUS, lb=0)
-        for i in abp.order
-        for r in abp.rows
-    }
-    # passenger pi^-1(i) finishes actions at row r
-    TimeFinish = {
-        (i, r): m.addVar(vtype=gp.GRB.CONTINUOUS, lb=0)
-        for i in abp.order
-        for r in abp.rows
-    }
-
-    # Makepsan variable. This is bounded below by the last finish time TimeFinish[i, R]
-    CompletionTime = m.addVar(vtype=gp.GRB.CONTINUOUS, lb=0)
-
-    # Objective - Minimise makespan
-    m.setObjective(CompletionTime, gp.GRB.MINIMIZE)
-
-    OrderMustBeFilled = {
-        i: m.addConstr(gp.quicksum(X[p, i] for p in abp.passengers) == 1)
-        for i in abp.order
-    }
-
-    # Constraints
-    OnePassengerOnePositionInOrder = {
-        p: m.addConstr(gp.quicksum(X[p, i] for i in abp.order) == 1)
-        for p in abp.passengers
-    }
-
-    CompletionTimeSmallestFinish = {
-        i: m.addConstr(CompletionTime >= TimeFinish[i, abp.num_rows]) for i in abp.order
-    }
-
-    ArriveNextRowBeforeCurrent = {
-        (i, r): m.addConstr(TimeArrival[i, r + 1] - TimeFinish[i, r] >= 0)
-        for i in abp.order
-        for r in abp.rows[:-1]  # Not concerned with the last row
-    }
-
-    # M = {(p, r, i): compute_M(abp.passengers, p, r, i) for p in abp.passengers for r in R for i in abp.order}
-    M = 10**3
-    VirtualPassing = {
-        (i, r): m.addConstr(
-            TimeArrival[i, r + 1] - TimeFinish[i, r]
-            <= gp.quicksum(M * X[p, i] for p in abp.passengers if p.row <= r)
-        )
-        for i in abp.order
-        for r in abp.rows[:-1]
-    }
-
-    NaturalAisleOrder = {
-        (i, r): m.addConstr(TimeArrival[i + 1, r] >= TimeFinish[i, r])
-        for i in abp.order[:-1]
-        for r in abp.rows
-    }
-
-    Tau = {(p, r): time_taken_at_row(p, r) for p in abp.passengers for r in abp.rows}
-    MovementCost = {
-        (i, r): m.addConstr(
-            TimeFinish[i, r] - TimeArrival[i, r]
-            >= gp.quicksum(Tau[p, r] * X[p, i] for p in abp.passengers)
-        )
-        for i in abp.order
-        for r in abp.rows
-    }
-
-    m.setParam("OutputFlag", 0)
-    return m, X
-
-
 class AbpSolution:
     def __init__(
         self,
@@ -149,19 +65,12 @@ class AbpSolution:
         self.ordering = ordering
 
         self.computation_time = None
-        self.makespan = makespan or self.simulate_seating()
+        self.makespan = makespan or self.simulate_boarding()
 
-    def _calc_makespan(self):
-        m, X = build_model(self.problem)
+    def parse_json(self, filename: str):
+        ...
 
-        for i, p in enumerate(self.ordering, start=1):
-            X[p, i].lb = 1
-
-        m.optimize()
-
-        return m.objVal
-
-    def simulate_seating(self):
+    def simulate_boarding(self):
         abp = self.problem
         passenger_seated_times = [0 for _ in range(abp.num_passengers)]
         # Time a passenger enters a row
