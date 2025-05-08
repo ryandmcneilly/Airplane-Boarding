@@ -13,11 +13,7 @@ from util import (
 
 def earliest_finish_time_to_row(passenger: Passenger, row: int) -> int:
     # Smallest arrival time for any passenger to that given row
-    return int(sum(
-        time_taken_at_row(passenger, r) for r in range(1, row + 1)
-    ))
-
-
+    return int(sum(time_taken_at_row(passenger, r) for r in range(1, row + 1)))
 
 
 class CPSolver(Solver):
@@ -30,21 +26,34 @@ class CPSolver(Solver):
         R0 = [0] + list(abp.rows)
 
         # Variables --------------------------------------
-        CMax = m.new_int_var(lb=max(earliest_finish_time_to_row(p, abp.num_rows) for p in abp.passengers), ub=heuristic_solution.makespan, name="CMax")
+        CMax = m.new_int_var(
+            lb=max(
+                earliest_finish_time_to_row(p, abp.num_rows) for p in abp.passengers
+            ),
+            ub=heuristic_solution.makespan,
+            name="CMax",
+        )
         m.add_hint(CMax, heuristic_solution.makespan)
 
         TF = {
-            (p, r): m.new_int_var(lb=earliest_finish_time_to_row(p, r) if r <= p.row else 0, ub=heuristic_solution.makespan, name=f"TF_({p.row},{p.column}),{r}")
+            (p, r): m.new_int_var(
+                lb=earliest_finish_time_to_row(p, r) if r <= p.row else 0,
+                ub=heuristic_solution.makespan,
+                name=f"TF_({p.row},{p.column}),{r}",
+            )
             for p in abp.passengers
             for r in R0
         }
         for i, p in enumerate(heuristic_solution.ordering):
             for r in range(p.row):
-                m.add_hint(TF[p, r], heuristic_solution.passenger_enter_row[i][r+1])
-
+                m.add_hint(TF[p, r], heuristic_solution.passenger_enter_row[i][r + 1])
 
         W = {
-            (p, r): m.new_int_var(lb=0, ub=heuristic_solution.makespan, name=f"W_({p.row},{p.column}), {r}")
+            (p, r): m.new_int_var(
+                lb=0,
+                ub=heuristic_solution.makespan,
+                name=f"W_({p.row},{p.column}), {r}",
+            )
             for p in abp.passengers
             for r in R0
             if r <= p.row
@@ -52,7 +61,10 @@ class CPSolver(Solver):
 
         I = {
             (p, r): m.new_interval_var(
-                start=TF[p, r - 1], end=TF[p, r], size=W[p, r], name=f"I_({p.row},{p.column}),{r}"
+                start=TF[p, r - 1],
+                end=TF[p, r],
+                size=W[p, r],
+                name=f"I_({p.row},{p.column}),{r}",
             )
             for p in abp.passengers
             for r in abp.rows

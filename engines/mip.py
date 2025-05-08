@@ -2,10 +2,10 @@ from engines.heuristic_search import get_best_heuristic
 from engines.two_opt_search import two_opt_search
 from util import *
 
+
 class MIPSolver(Solver):
     def solve_implementation(self, abp: AirplaneBoardingProblem) -> AbpSolution:
         m = gp.Model("Paper Airplane Boarding")
-
 
         heuristic_solution = get_best_heuristic(abp)
         heuristic_solution = two_opt_search(abp, heuristic_solution)
@@ -21,7 +21,6 @@ class MIPSolver(Solver):
         for p, i in X:
             X[p, i].Start = heuristic_solution.ordering[i - 1] == p
 
-
         TimeArrival = {
             (i, r): m.addVar(vtype=gp.GRB.CONTINUOUS)
             for i in abp.order
@@ -31,7 +30,9 @@ class MIPSolver(Solver):
             last_arrival = max(heuristic_solution.passenger_enter_row[i])
             for r in abp.rows:
                 if r <= p.row:
-                    TimeArrival[i+1, r].Start = heuristic_solution.passenger_enter_row[i][r]
+                    TimeArrival[i + 1, r].Start = (
+                        heuristic_solution.passenger_enter_row[i][r]
+                    )
                 else:
                     TimeArrival[i + 1, r].Start = last_arrival
 
@@ -59,7 +60,8 @@ class MIPSolver(Solver):
         }
 
         CompletionTimeSmallestFinish = {
-            i: m.addConstr(CompletionTime >= TimeFinish[i, abp.num_rows]) for i in abp.order
+            i: m.addConstr(CompletionTime >= TimeFinish[i, abp.num_rows])
+            for i in abp.order
         }
 
         ArriveNextRowBeforeCurrent = {
@@ -71,7 +73,11 @@ class MIPSolver(Solver):
         VirtualPassing = {
             (i, r): m.addConstr(
                 TimeArrival[i, r + 1] - TimeFinish[i, r]
-                <= gp.quicksum(heuristic_solution.makespan * X[p, i] for p in abp.passengers if p.row <= r)
+                <= gp.quicksum(
+                    heuristic_solution.makespan * X[p, i]
+                    for p in abp.passengers
+                    if p.row <= r
+                )
             )
             for i in abp.order
             for r in abp.rows[:-1]
@@ -83,7 +89,9 @@ class MIPSolver(Solver):
             for r in abp.rows
         }
 
-        Tau = {(p, r): time_taken_at_row(p, r) for p in abp.passengers for r in abp.rows}
+        Tau = {
+            (p, r): time_taken_at_row(p, r) for p in abp.passengers for r in abp.rows
+        }
         MovementCost = {
             (i, r): m.addConstr(
                 TimeFinish[i, r] - TimeArrival[i, r]
@@ -96,8 +104,8 @@ class MIPSolver(Solver):
         m.optimize()
 
         result = [None for _ in range(len(set(p for p, i in X)))]
-        for (p, i) in X:
-            if round(X[p, i].x) == 1:
+        for p, i in X:
+            if round(X[p, i].X) == 1:
                 result[i - 1] = p
 
         return AbpSolution(abp, result, makespan=m.objVal)
