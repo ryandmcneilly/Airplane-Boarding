@@ -16,9 +16,9 @@ def two_opt_search(abp: AirplaneBoardingProblem, solution: AbpSolution):
                 new_solution = AbpSolution(abp, new_ordering)
                 if new_solution.makespan < curr_solution.makespan:
                     print(f"Found a better solution in 2-opt: {curr_solution.makespan} -> {new_solution.makespan}")
-                    solution = new_solution
+                    curr_solution = new_solution
                     found_improvement =  True
 
-    return solution
+    return curr_solution
 
 
