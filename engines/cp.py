@@ -37,12 +37,13 @@ class CPSolver(Solver):
 
         TF = {
             (p, r): m.new_int_var(
-                lb=earliest_finish_time_to_row(p, r) if r <= p.row else 0,
+                lb=earliest_finish_time_to_row(p, r),
                 ub=heuristic_solution.makespan,
                 name=f"TF_({p.row},{p.column}),{r}",
             )
             for p in abp.passengers
             for r in R0
+            if r <= p.row
         }
         for i, p in enumerate(heuristic_solution.ordering):
             for r in range(p.row):
@@ -50,7 +51,7 @@ class CPSolver(Solver):
 
         W = {
             (p, r): m.new_int_var(
-                lb=0,
+                lb=time_taken_at_row(p, r),
                 ub=heuristic_solution.makespan,
                 name=f"W_({p.row},{p.column}), {r}",
             )
@@ -72,27 +73,22 @@ class CPSolver(Solver):
         }
 
         # Subject to --------------------------------------
-        SetW = {
-            (p, r): m.add(W[p, r] == TF[p, r] - TF[p, r - 1])
+        PreserveOrder = {
+            (p, r): m.add(TF[p, r] >= TF[p, r - 1] + time_taken_at_row(p, r))
             for p in abp.passengers
             for r in abp.rows
             if r <= p.row
         }
 
-        passenger_at_row_cost = {
-            (p, r): int(time_taken_at_row(p, r))
-            for p in abp.passengers
-            for r in abp.rows
-        }
-
         PreserveOrder = {
-            (p, r): m.add(TF[p, r] >= TF[p, r - 1] + passenger_at_row_cost[p, r])
+            (p, r): m.add(W[p, r] >= +time_taken_at_row(p, r))
             for p in abp.passengers
             for r in abp.rows
+            if r <= p.row
         }
 
         NoOverlap = {
-            r: m.add_no_overlap([I[p, r] for p in abp.passengers if (p, r) in I])
+            r: m.add_no_overlap(I[p, r] for p in abp.passengers if (p, r) in I)
             for r in abp.rows
         }
 
@@ -121,5 +117,6 @@ if __name__ == "__main__":
     cp_solver = CPSolver()
 
     cp_solution = cp_solver.solve(abp)
+    cp_solution.visualise_solution()
     print(f"Solved in {cp_solution.computation_time:.2f}s")
     print("Makespan", cp_solution.makespan)
