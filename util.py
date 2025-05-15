@@ -2,11 +2,9 @@ import json
 from collections import namedtuple
 from abc import ABC, abstractmethod
 import time
-import gurobipy as gp
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import pandas as pd
-import plotly.figure_factory as ff
 import plotly.express as px
 
 Passenger = namedtuple(
@@ -16,9 +14,9 @@ Passenger = namedtuple(
 
 def time_taken_at_row(p: Passenger, r: int) -> int:
     if r <= p.row - 1:
-        return p.move_times[r - 1]
+        return int(p.move_times[r - 1])
     elif r == p.row:
-        return p.settle_time
+        return int(p.settle_time)
     elif r >= p.row + 1:
         return 0
     assert "Unreachable"
