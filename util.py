@@ -5,6 +5,9 @@ import time
 import gurobipy as gp
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+import pandas as pd
+import plotly.figure_factory as ff
+import plotly.express as px
 
 Passenger = namedtuple(
     "Passenger", ["row", "column", "settle_time", "move_times", "id"]
@@ -35,9 +38,12 @@ class AirplaneBoardingProblem:
                 row=json_data["pax_seats"][i][0] + 1,
                 column=json_data["pax_seats"][i][1] + 1,
                 settle_time=int(10 * json_data["times_clear"][i]),
-                move_times=(given_times := tuple(
-                    10 * m_time for m_time in json_data["times_move"][i]
-                )) + tuple(0 for _ in range(self.num_rows - len(given_times))),
+                move_times=(
+                    given_times := tuple(
+                        10 * m_time for m_time in json_data["times_move"][i]
+                    )
+                )
+                + tuple(0 for _ in range(self.num_rows - len(given_times))),
             )
             for i in range(self.num_passengers)
         ]
@@ -46,6 +52,7 @@ class AirplaneBoardingProblem:
         self.rows = range(1, self.num_rows + 1)
 
         f.close()
+
 
 class AbpSolution:
     def __init__(
@@ -60,7 +67,6 @@ class AbpSolution:
 
         self.computation_time = None
         self.makespan = makespan or self.simulate_boarding()
-
 
     def simulate_boarding(self) -> int:
         abp = self.problem
@@ -88,15 +94,16 @@ class AbpSolution:
                     row_blockage[row - 1] = self.passenger_enter_row[i][row]
 
                 if row == p.row:
-                    passenger_seated_time = self.passenger_enter_row[i][row] + p.settle_time
+                    passenger_seated_time = (
+                        self.passenger_enter_row[i][row] + p.settle_time
+                    )
                     row_blockage[row] = passenger_seated_time
                     passenger_seated_times[i] = passenger_seated_time
 
         makespan = max(passenger_seated_times, default=0)
         return int(makespan)
 
-    def visualise_solution(self):
-        self.print_solution()
+    def make_solution_plot(self):
         mapping = {(p.row, p.column): i for i, p in enumerate(self.ordering)}
 
         num_rows = max(row for row, _ in mapping)
@@ -157,7 +164,36 @@ class AbpSolution:
         ax.set_aspect("equal")
         plt.show()
 
+    def make_gantt_chart(self):
+        df = pd.DataFrame(
+            [
+                dict(
+                    Task=f"Passenger {i+1}",
+                    Start=self.passenger_enter_row[i][r],
+                    Delta=self.passenger_enter_row[i][r + 1],
+                    Resource=f"Row {r+1}",
+                )
+                for i, p in enumerate(self.ordering)
+                for r in range(len(self.passenger_enter_row[i]) - 1)
+            ]
+        )
+        df["Finish"] = df["Delta"] - df["Start"]
+
+        fig = px.bar(
+            df, base="Start", x="Finish", y="Resource", color="Task", orientation="h"
+        )
+
+        fig.update_yaxes(autorange="reversed")
+        fig.show()
+
+    def visualise_solution(self):
+        self.simulate_boarding()
+        self.print_solution()
+        # self.make_solution_plot()
+        self.make_gantt_chart()
+
     def print_solution(self):
+        print("Found solution with makespan", self.makespan / 10)
         [
             print(i, (p.row, p.column, p.move_times[0], p.settle_time))
             for i, p in enumerate(self.ordering)
