@@ -1,5 +1,6 @@
 from ortools.sat.python import cp_model
 
+import util
 from engines.heuristic_search import get_best_heuristic
 from engines.two_opt_search import two_opt_search
 from util import (
@@ -81,7 +82,7 @@ class CPSolver(Solver):
         }
 
         PreserveOrder = {
-            (p, r): m.add(W[p, r] >= +time_taken_at_row(p, r))
+            (p, r): m.add(W[p, r] >= time_taken_at_row(p, r))
             for p in abp.passengers
             for r in abp.rows
             if r <= p.row
@@ -113,7 +114,7 @@ class CPSolver(Solver):
 
 
 if __name__ == "__main__":
-    abp = AirplaneBoardingProblem(f"../data/mp_sp/10_2/mp_sp__10_2__1.json")
+    abp = AirplaneBoardingProblem(util.CURRENT_ABP_PROBLEM)
     cp_solver = CPSolver()
 
     cp_solution = cp_solver.solve(abp)

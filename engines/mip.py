@@ -1,3 +1,4 @@
+import util
 from engines.heuristic_search import get_best_heuristic
 from engines.two_opt_search import two_opt_search
 from util import *
@@ -43,7 +44,7 @@ class MIPSolver(Solver):
             for r in abp.rows
         }
 
-        CompletionTime = m.addVar(vtype=gp.GRB.CONTINUOUS)
+        CompletionTime = m.addVar(vtype=gp.GRB.CONTINUOUS, ub=heuristic_solution.makespan)
 
         # Objective --------------------------------------
         m.setObjective(CompletionTime, gp.GRB.MINIMIZE)
@@ -113,7 +114,8 @@ class MIPSolver(Solver):
 
 
 if __name__ == "__main__":
-    abp = AirplaneBoardingProblem(f"../data/mp_sp/10_2/mp_sp__10_2__1.json")
+    num_rows, k, test_num = util.CURRENT_ABP_PROBLEM
+    abp = AirplaneBoardingProblem(f"../data/mp_sp/{num_rows}_{k}/mp_sp__{num_rows}_{k}__{test_num}.json")
 
     mip_solver = MIPSolver()
     mip_solution = mip_solver.solve(abp)

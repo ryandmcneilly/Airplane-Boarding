@@ -11,6 +11,12 @@ Passenger = namedtuple(
     "Passenger", ["row", "column", "settle_time", "move_times", "id"]
 )
 
+AbpFilePath = namedtuple(
+    "AbpFilePath", ["num_rows", "k", "test_number"]
+)
+#                      R   k  num
+CURRENT_ABP_PROBLEM: AbpFilePath = AbpFilePath(10, 2, 0)
+
 
 def time_taken_at_row(p: Passenger, r: int) -> int:
     if r <= p.row - 1:
@@ -23,9 +29,12 @@ def time_taken_at_row(p: Passenger, r: int) -> int:
 
 
 class AirplaneBoardingProblem:
-    def __init__(self, filename: str):
+    def __init__(self, filepath: AbpFilePath):
+        num_rows, k, test_num = filepath
+        filename = f"../data/mp_sp/{num_rows}_{k}/mp_sp__{num_rows}_{k}__{test_num}.json"
         f = open(filename, "r")
         json_data = json.load(f)
+        self.filepath = filepath
         self.num_rows: int = len(json_data["n_seats_row"])
         self.num_cols: int = len(json_data["n_seats_row"][0])
         self.num_passengers: int = len(json_data["times_move"])
@@ -166,7 +175,7 @@ class AbpSolution:
         df = pd.DataFrame(
             [
                 dict(
-                    Task=f"Passenger {i+1}",
+                    Task=f"Passenger {p.row, p.column}",
                     Start=self.passenger_enter_row[i][r],
                     Delta=self.passenger_enter_row[i][r + 1],
                     Resource=f"Row {r+1}",
@@ -177,8 +186,10 @@ class AbpSolution:
         )
         df["Finish"] = df["Delta"] - df["Start"]
 
+        filepath = self.problem.filepath
+        title = f"ABP problem: Rows={filepath.num_rows}, k={filepath.k}, TestNumber={filepath.test_number}"
         fig = px.bar(
-            df, base="Start", x="Finish", y="Resource", color="Task", orientation="h"
+            df, base="Start", x="Finish", y="Resource", color="Task", orientation="h", title=title
         )
 
         fig.update_yaxes(autorange="reversed")

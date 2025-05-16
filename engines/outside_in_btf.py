@@ -1,3 +1,4 @@
+import util
 from util import *
 import itertools
 
@@ -16,7 +17,7 @@ class OutsideInBTF(Solver):
         return AbpSolution(abp, result)
 
 if __name__ == "__main__":
-    abp = AirplaneBoardingProblem("../data/mp_sp/10_2/m_p_s_p_10_2_0.abp")
+    abp = AirplaneBoardingProblem(util.CURRENT_ABP_PROBLEM)
 
     outside_in_btf = OutsideInBTF()
     sol = outside_in_btf.solve(abp)
