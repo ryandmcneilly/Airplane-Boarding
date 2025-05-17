@@ -12,10 +12,10 @@ Passenger = namedtuple(
     "Passenger", ["row", "column", "settle_time", "move_times", "id"]
 )
 
-AbpFilePath = namedtuple(
-    "AbpFilePath", ["num_rows", "k", "test_number"]
+AbpFilepath = namedtuple(
+    "AbpFilepath", ["num_rows", "num_columns", "test_number"]
 )
-CURRENT_ABP_PROBLEM = AbpFilePath(num_rows=10, k=2, test_number=0)
+CURRENT_ABP_PROBLEM = AbpFilepath(num_rows=10, num_columns=2, test_number=0)
 
 
 def time_taken_at_row(p: Passenger, r: int) -> int:
@@ -29,10 +29,10 @@ def time_taken_at_row(p: Passenger, r: int) -> int:
 
 
 class AirplaneBoardingProblem:
-    def __init__(self, filepath: AbpFilePath):
-        num_rows, k, test_num = filepath
+    def __init__(self, filepath: AbpFilepath):
+        num_rows, num_columns, test_num = filepath
         script_dir = os.path.dirname(__file__)
-        filename = os.path.join(script_dir, f"data/mp_sp/{num_rows}_{k}/mp_sp__{num_rows}_{k}__{test_num}.json")
+        filename = os.path.join(script_dir, f"data/mp_sp/{num_rows}_{num_columns}/mp_sp__{num_rows}_{num_columns}__{test_num}.json")
         f = open(filename, "r")
         json_data = json.load(f)
         self.filepath = filepath
@@ -69,12 +69,14 @@ class AbpSolution:
         ordering: list[Passenger | None],
         *,
         makespan=None,
+        timed_out=False
     ):
         self.problem = problem
         self.ordering = ordering
 
         self.computation_time = None
         self.makespan = makespan or self.simulate_boarding()
+        self.timed_out = timed_out
 
     def simulate_boarding(self) -> int:
         abp = self.problem
@@ -188,7 +190,7 @@ class AbpSolution:
         df["Finish"] = df["Delta"] - df["Start"]
 
         filepath = self.problem.filepath
-        title = f"ABP problem: Rows={filepath.num_rows}, k={filepath.k}, TestNumber={filepath.test_number}"
+        title = f"ABP problem: Rows={filepath.num_rows}, num_columns={filepath.num_columns}, TestNumber={filepath.test_number}"
         fig = px.bar(
             df, base="Start", x="Finish", y="Resource", color="Task", orientation="h", title=title
         )

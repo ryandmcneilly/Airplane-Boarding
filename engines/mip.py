@@ -5,7 +5,7 @@ from util import *
 import gurobipy as gp
 
 
-class MIPAbpSolver(AbpSolver):
+class MIP(AbpSolver):
     def solve_implementation(self, abp: AirplaneBoardingProblem) -> AbpSolution:
         m = gp.Model("Paper Airplane Boarding")
 
@@ -103,6 +103,8 @@ class MIPAbpSolver(AbpSolver):
             for r in abp.rows
         }
 
+        m.params.TimeLimit = 60 * 60
+
         m.optimize()
 
         result = [None for _ in range(len(set(p for p, i in X)))]
@@ -110,14 +112,13 @@ class MIPAbpSolver(AbpSolver):
             if round(X[p, i].X) == 1:
                 result[i - 1] = p
 
-        return AbpSolution(abp, result, makespan=m.objVal)
+        return AbpSolution(abp, result, makespan=m.objVal, timed_out=m.Status != gp.GRB.OPTIMAL)
 
 
 if __name__ == "__main__":
-    num_rows, k, test_num = util.CURRENT_ABP_PROBLEM
-    abp = AirplaneBoardingProblem(f"../data/mp_sp/{num_rows}_{k}/mp_sp__{num_rows}_{k}__{test_num}.json")
+    abp = AirplaneBoardingProblem(util.CURRENT_ABP_PROBLEM)
 
-    mip_solver = MIPAbpSolver()
+    mip_solver = MIP()
     mip_solution = mip_solver.solve(abp)
     print(f"Solved in {mip_solution.computation_time:.2f}s")
 

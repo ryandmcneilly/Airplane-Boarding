@@ -16,8 +16,23 @@ def earliest_finish_time_to_row(passenger: Passenger, row: int) -> int:
     # Smallest arrival time for any passenger to that given row
     return int(sum(time_taken_at_row(passenger, r) for r in range(1, row + 1)))
 
+# def lower_bound_on_boarding(abp: AirplaneBoardingProblem):
+#     # Assume every passenger has move speeds as the slowest passenger
+#     smallest_move_time = min(time for p in abp.passengers for time in p.move_times if time > 0)
+#     smallest_settle_time = min(p.settle_time for p in abp.passengers)
+#
+#     new_passengers = [
+#         Passenger(
+#             row=row,
+#             column=col,
+#             move_times=[smallest_move_time]
+#
+#         )
+#         for row in abp.rows for col in range(1, abp.num_cols+1)
+#     ]
 
-class CPAbpSolver(AbpSolver):
+
+class CP(AbpSolver):
     def solve_implementation(self, abp: AirplaneBoardingProblem) -> AbpSolution:
         m = cp_model.CpModel()
 
@@ -111,12 +126,12 @@ class CPAbpSolver(AbpSolver):
             )
             if r == 1
         ]
-        return AbpSolution(abp, result, makespan=solver.value(CMax))
+        return AbpSolution(abp, result, makespan=solver.value(CMax), timed_out=status == cp_model.FEASIBLE)
 
 
 if __name__ == "__main__":
     abp = AirplaneBoardingProblem(util.CURRENT_ABP_PROBLEM)
-    cp_solver = CPAbpSolver()
+    cp_solver = CP()
 
     cp_solution = cp_solver.solve(abp)
     cp_solution.visualise_solution()
