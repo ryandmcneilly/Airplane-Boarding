@@ -2,7 +2,7 @@ import util
 from util import *
 import itertools
 
-class MaxSettleRow(Solver):
+class MaxSettleRow(AbpSolver):
     def solve_implementation(self, abp: AirplaneBoardingProblem) -> AbpSolution:
         row_groups = [
             sorted([p for p in abp.passengers if p.row == row], key=lambda p: p.settle_time, reverse=True)

@@ -2,7 +2,7 @@ import util
 from util import *
 import itertools
 
-class OutsideInBTF(Solver):
+class OutsideInBTF(AbpSolver):
     def solve_implementation(self, abp: AirplaneBoardingProblem) -> AbpSolution:
         column_groups = [
             [p for p in abp.passengers if p.column == col]

@@ -3,7 +3,7 @@ from util import Passenger, AbpSolution, AirplaneBoardingProblem
 
 def two_opt_search(abp: AirplaneBoardingProblem, solution: AbpSolution):
     found_improvement = True
-    curr_solution = AbpSolution(solution.problem, solution.ordering, makespan=solution.makespan)
+    curr_solution = solution
 
     while found_improvement:
         found_improvement = False

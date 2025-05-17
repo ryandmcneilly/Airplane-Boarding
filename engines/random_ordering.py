@@ -2,7 +2,7 @@ import util
 from util import *
 import random
 
-class RandomSolver(Solver):
+class RandomAbpSolver(AbpSolver):
     def solve_implementation(
         self, abp: AirplaneBoardingProblem
     ) -> AbpSolution:
@@ -11,6 +11,6 @@ class RandomSolver(Solver):
 
 if __name__ == "__main__":
     abp = AirplaneBoardingProblem(util.CURRENT_ABP_PROBLEM)
-    rand_solver = RandomSolver()
+    rand_solver = RandomAbpSolver()
     solution = rand_solver.solve(abp)
     solution.visualise_solution()

@@ -1,4 +1,5 @@
 import json
+import os.path
 from collections import namedtuple
 from abc import ABC, abstractmethod
 import time
@@ -14,8 +15,7 @@ Passenger = namedtuple(
 AbpFilePath = namedtuple(
     "AbpFilePath", ["num_rows", "k", "test_number"]
 )
-#                      R   k  num
-CURRENT_ABP_PROBLEM: AbpFilePath = AbpFilePath(10, 2, 0)
+CURRENT_ABP_PROBLEM = AbpFilePath(num_rows=10, k=2, test_number=0)
 
 
 def time_taken_at_row(p: Passenger, r: int) -> int:
@@ -31,7 +31,8 @@ def time_taken_at_row(p: Passenger, r: int) -> int:
 class AirplaneBoardingProblem:
     def __init__(self, filepath: AbpFilePath):
         num_rows, k, test_num = filepath
-        filename = f"../data/mp_sp/{num_rows}_{k}/mp_sp__{num_rows}_{k}__{test_num}.json"
+        script_dir = os.path.dirname(__file__)
+        filename = os.path.join(script_dir, f"data/mp_sp/{num_rows}_{k}/mp_sp__{num_rows}_{k}__{test_num}.json")
         f = open(filename, "r")
         json_data = json.load(f)
         self.filepath = filepath
@@ -197,9 +198,11 @@ class AbpSolution:
 
     def visualise_solution(self):
         self.simulate_boarding()
-        self.print_solution()
+        # self.print_solution()
         # self.make_solution_plot()
         self.make_gantt_chart()
+        print(f"Solved in {self.computation_time:.2f}s")
+        print("Makespan", self.makespan / 10)
 
     def print_solution(self):
         print("Found solution with makespan", self.makespan / 10)
@@ -209,7 +212,7 @@ class AbpSolution:
         ]
 
 
-class Solver(ABC):
+class AbpSolver(ABC):
     def solve(self, abp: AirplaneBoardingProblem) -> AbpSolution:
         start = time.time()
         solution = self.solve_implementation(abp)

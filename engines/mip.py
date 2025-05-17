@@ -5,7 +5,7 @@ from util import *
 import gurobipy as gp
 
 
-class MIPSolver(Solver):
+class MIPAbpSolver(AbpSolver):
     def solve_implementation(self, abp: AirplaneBoardingProblem) -> AbpSolution:
         m = gp.Model("Paper Airplane Boarding")
 
@@ -117,7 +117,7 @@ if __name__ == "__main__":
     num_rows, k, test_num = util.CURRENT_ABP_PROBLEM
     abp = AirplaneBoardingProblem(f"../data/mp_sp/{num_rows}_{k}/mp_sp__{num_rows}_{k}__{test_num}.json")
 
-    mip_solver = MIPSolver()
+    mip_solver = MIPAbpSolver()
     mip_solution = mip_solver.solve(abp)
     print(f"Solved in {mip_solution.computation_time:.2f}s")
 

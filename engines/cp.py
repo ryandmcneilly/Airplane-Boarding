@@ -4,7 +4,7 @@ import util
 from engines.heuristic_search import get_best_heuristic
 from engines.two_opt_search import two_opt_search
 from util import (
-    Solver,
+    AbpSolver,
     AirplaneBoardingProblem,
     AbpSolution,
     Passenger,
@@ -17,12 +17,11 @@ def earliest_finish_time_to_row(passenger: Passenger, row: int) -> int:
     return int(sum(time_taken_at_row(passenger, r) for r in range(1, row + 1)))
 
 
-class CPSolver(Solver):
+class CPAbpSolver(AbpSolver):
     def solve_implementation(self, abp: AirplaneBoardingProblem) -> AbpSolution:
         m = cp_model.CpModel()
 
-        heuristic_solution = get_best_heuristic(abp)
-        heuristic_solution = two_opt_search(abp, heuristic_solution)
+        heuristic_solution: AbpSolution = two_opt_search(abp, get_best_heuristic(abp))
 
         R0 = [0] + list(abp.rows)
 
@@ -115,9 +114,8 @@ class CPSolver(Solver):
 
 if __name__ == "__main__":
     abp = AirplaneBoardingProblem(util.CURRENT_ABP_PROBLEM)
-    cp_solver = CPSolver()
+    cp_solver = CPAbpSolver()
 
     cp_solution = cp_solver.solve(abp)
     cp_solution.visualise_solution()
-    print(f"Solved in {cp_solution.computation_time:.2f}s")
-    print("Makespan", cp_solution.makespan)
+
