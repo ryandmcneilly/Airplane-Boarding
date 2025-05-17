@@ -100,7 +100,9 @@ class CPAbpSolver(AbpSolver):
         # Result --------------------------------------
         solver = cp_model.CpSolver()
         solver.parameters.log_search_progress = True
-        solver.solve(m)
+        solver.parameters.num_workers = 8
+        solver.parameters.max_time_in_seconds = 60 * 60
+        status = solver.solve(m)
 
         result = [
             p
