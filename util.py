@@ -15,7 +15,7 @@ Passenger = namedtuple(
 AbpFilepath = namedtuple(
     "AbpFilepath", ["num_rows", "num_columns", "test_number"]
 )
-CURRENT_ABP_PROBLEM = AbpFilepath(num_rows=10, num_columns=2, test_number=0)
+CURRENT_ABP_PROBLEM = AbpFilepath(num_rows=10, num_columns=2, test_number=6)
 
 
 def time_taken_at_row(p: Passenger, r: int) -> int:
@@ -69,7 +69,8 @@ class AbpSolution:
         ordering: list[Passenger | None],
         *,
         makespan=None,
-        timed_out=False
+        timed_out=False,
+        finish_times=None
     ):
         self.problem = problem
         self.ordering = ordering
@@ -77,6 +78,7 @@ class AbpSolution:
         self.computation_time = None
         self.makespan = makespan or self.simulate_boarding()
         self.timed_out = timed_out
+        self.finish_times = finish_times
 
     def simulate_boarding(self) -> int:
         abp = self.problem
@@ -175,18 +177,27 @@ class AbpSolution:
         plt.show()
 
     def make_gantt_chart(self):
+        if not self.finish_times:
+            self.finish_times = {
+                (p, r): self.passenger_enter_row[i][r]
+                for i, p in enumerate(self.ordering)
+                for r in range(len(self.passenger_enter_row[i]) - 1)
+            }
+
         df = pd.DataFrame(
             [
                 dict(
                     Task=f"Passenger {p.row, p.column}",
-                    Start=self.passenger_enter_row[i][r],
-                    Delta=self.passenger_enter_row[i][r + 1],
-                    Resource=f"Row {r+1}",
+                    Start=self.finish_times[p, r-1],
+                    Delta=self.finish_times[p, r],
+                    Resource=f"Row {r}",
                 )
                 for i, p in enumerate(self.ordering)
-                for r in range(len(self.passenger_enter_row[i]) - 1)
+                for r in self.problem.rows
+                if r <= p.row
             ]
         )
+
         df["Finish"] = df["Delta"] - df["Start"]
 
         filepath = self.problem.filepath
