@@ -1,7 +1,10 @@
+import copy
+
 from ortools.sat.python import cp_model
 
 import util
 from engines.heuristic_search import get_best_heuristic
+from engines.max_settle_row import MaxSettleRow
 from engines.two_opt_search import two_opt_search
 from util import (
     AbpSolver,
@@ -16,24 +19,28 @@ def earliest_finish_time_to_row(passenger: Passenger, row: int) -> int:
     # Smallest arrival time for any passenger to that given row
     return int(sum(time_taken_at_row(passenger, r) for r in range(1, row + 1)))
 
-# def lower_bound_on_boarding(abp: AirplaneBoardingProblem):
-#     # Assume every passenger has move speeds as the slowest passenger
-#     smallest_move_time = min(time for p in abp.passengers for time in p.move_times if time > 0)
-#     smallest_settle_time = min(p.settle_time for p in abp.passengers)
-#
-#     new_passengers = [
-#         Passenger(
-#             row=row,
-#             column=col,
-#             move_times=[smallest_move_time]
-#
-#         )
-#         for row in abp.rows for col in range(1, abp.num_cols+1)
-#     ]
+def lower_bound_on_boarding(abp: AirplaneBoardingProblem):
+    new_passengers = [
+        Passenger(
+            row=p.row,
+            column=p.column,
+            move_times=[min(move_time for move_time in p.move_times)] * len(p.move_times),
+            settle_time=p.settle_time,
+            id=p.id
+        )
+        for p in abp.passengers
+    ]
+
+    slow_abp = copy.copy(abp)
+    slow_abp.passengers = new_passengers
+    return slow_abp
 
 
 class CP(AbpSolver):
     def solve_implementation(self, abp: AirplaneBoardingProblem) -> AbpSolution:
+        slow_abp: AirplaneBoardingProblem = lower_bound_on_boarding(abp)
+        lb_solution: AbpSolution = MaxSettleRow().solve(slow_abp)
+
         m = cp_model.CpModel()
 
         heuristic_solution: AbpSolution = two_opt_search(abp, get_best_heuristic(abp))
@@ -42,9 +49,7 @@ class CP(AbpSolver):
 
         # Variables --------------------------------------
         CMax = m.new_int_var(
-            lb=max(
-                earliest_finish_time_to_row(p, abp.num_rows) for p in abp.passengers
-            ),
+            lb=lb_solution.makespan,
             ub=heuristic_solution.makespan,
             name="CMax",
         )
@@ -60,9 +65,6 @@ class CP(AbpSolver):
             for r in R0
             if r <= p.row
         }
-        for i, p in enumerate(heuristic_solution.ordering):
-            for r in range(p.row):
-                m.add_hint(TF[p, r], heuristic_solution.passenger_enter_row[i][r + 1])
 
         W = {
             (p, r): m.new_int_var(
@@ -72,14 +74,14 @@ class CP(AbpSolver):
             )
             for p in abp.passengers
             for r in R0
-            if r <= p.row
+            if r < p.row
         }
 
         I = {
             (p, r): m.new_interval_var(
                 start=TF[p, r - 1],
                 end=TF[p, r],
-                size=W[p, r],
+                size=W[p, r] if r < p.row else p.settle_time,
                 name=f"I_({p.row},{p.column}),{r}",
             )
             for p in abp.passengers
@@ -88,20 +90,6 @@ class CP(AbpSolver):
         }
 
         # Subject to --------------------------------------
-        PreserveOrder = {
-            (p, r): m.add(TF[p, r] >= TF[p, r - 1] + time_taken_at_row(p, r))
-            for p in abp.passengers
-            for r in abp.rows
-            if r <= p.row
-        }
-
-        PreserveOrder = {
-            (p, r): m.add(W[p, r] >= time_taken_at_row(p, r))
-            for p in abp.passengers
-            for r in abp.rows
-            if r <= p.row
-        }
-
         NoOverlap = {
             r: m.add_no_overlap(I[p, r] for p in abp.passengers if (p, r) in I)
             for r in abp.rows
@@ -126,7 +114,11 @@ class CP(AbpSolver):
             )
             if r == 1
         ]
-        return AbpSolution(abp, result, makespan=solver.value(CMax), timed_out=status == cp_model.FEASIBLE)
+
+        finish_times = {
+            (p,r): solver.value(TF[p, r]) for p in result for r in R0 if r <= p.row
+        }
+        return AbpSolution(abp, result, makespan=solver.value(CMax), timed_out=status == cp_model.FEASIBLE, finish_times=finish_times)
 
 
 if __name__ == "__main__":
