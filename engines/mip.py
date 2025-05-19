@@ -108,11 +108,14 @@ class MIP(AbpSolver):
         m.optimize()
 
         result = [None for _ in range(len(set(p for p, i in X)))]
+        if m.Status != gp.GRB.OPTIMAL:
+            AbpSolution(abp, result, makespan=m.objVal, timed_out=True)
+
         for p, i in X:
             if round(X[p, i].X) == 1:
                 result[i - 1] = p
 
-        return AbpSolution(abp, result, makespan=m.objVal, timed_out=m.Status != gp.GRB.OPTIMAL)
+        return AbpSolution(abp, result, makespan=m.objVal, timed_out=False)
 
 
 if __name__ == "__main__":
