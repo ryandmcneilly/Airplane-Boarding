@@ -5,7 +5,6 @@ from ortools.sat.python import cp_model
 import util
 from engines.heuristic_search import get_best_heuristic
 from engines.max_settle_row import MaxSettleRow
-from engines.two_opt_search import two_opt_search
 from util import (
     AbpSolver,
     AirplaneBoardingProblem,
@@ -43,22 +42,22 @@ class CP(AbpSolver):
 
         m = cp_model.CpModel()
 
-        heuristic_solution: AbpSolution = two_opt_search(abp, get_best_heuristic(abp))
+        heuristic_two_opt_solution: AbpSolution = get_best_heuristic(abp)
 
         R0 = [0] + list(abp.rows)
 
         # Variables --------------------------------------
         CMax = m.new_int_var(
             lb=lb_solution.makespan,
-            ub=heuristic_solution.makespan,
+            ub=heuristic_two_opt_solution.makespan,
             name="CMax",
         )
-        m.add_hint(CMax, heuristic_solution.makespan)
+        m.add_hint(CMax, heuristic_two_opt_solution.makespan)
 
         TF = {
             (p, r): m.new_int_var(
                 lb=earliest_finish_time_to_row(p, r),
-                ub=heuristic_solution.makespan,
+                ub=heuristic_two_opt_solution.makespan,
                 name=f"TF_({p.row},{p.column}),{r}",
             )
             for p in abp.passengers
@@ -69,7 +68,7 @@ class CP(AbpSolver):
         W = {
             (p, r): m.new_int_var(
                 lb=time_taken_at_row(p, r),
-                ub=heuristic_solution.makespan,
+                ub=heuristic_two_opt_solution.makespan,
                 name=f"W_({p.row},{p.column}), {r}",
             )
             for p in abp.passengers

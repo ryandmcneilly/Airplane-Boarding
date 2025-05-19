@@ -9,8 +9,7 @@ class MIP(AbpSolver):
     def solve_implementation(self, abp: AirplaneBoardingProblem) -> AbpSolution:
         m = gp.Model("Paper Airplane Boarding")
 
-        heuristic_solution = get_best_heuristic(abp)
-        heuristic_solution = two_opt_search(abp, heuristic_solution)
+        heuristic_two_opt_solution = get_best_heuristic(abp)
 
         # Variables --------------------------------------
         X = {
@@ -21,19 +20,19 @@ class MIP(AbpSolver):
 
         # Hot start solution with best heuristic
         for p, i in X:
-            X[p, i].Start = heuristic_solution.ordering[i - 1] == p
+            X[p, i].Start = heuristic_two_opt_solution.ordering[i - 1] == p
 
         TimeArrival = {
             (i, r): m.addVar(vtype=gp.GRB.CONTINUOUS)
             for i in abp.order
             for r in abp.rows
         }
-        for i, p in enumerate(heuristic_solution.ordering):
-            last_arrival = max(heuristic_solution.passenger_enter_row[i])
+        for i, p in enumerate(heuristic_two_opt_solution.ordering):
+            last_arrival = max(heuristic_two_opt_solution.passenger_enter_row[i])
             for r in abp.rows:
                 if r <= p.row:
                     TimeArrival[i + 1, r].Start = (
-                        heuristic_solution.passenger_enter_row[i][r]
+                        heuristic_two_opt_solution.passenger_enter_row[i][r]
                     )
                 else:
                     TimeArrival[i + 1, r].Start = last_arrival
@@ -44,7 +43,7 @@ class MIP(AbpSolver):
             for r in abp.rows
         }
 
-        CompletionTime = m.addVar(vtype=gp.GRB.CONTINUOUS, ub=heuristic_solution.makespan)
+        CompletionTime = m.addVar(vtype=gp.GRB.CONTINUOUS, ub=heuristic_two_opt_solution.makespan)
 
         # Objective --------------------------------------
         m.setObjective(CompletionTime, gp.GRB.MINIMIZE)
@@ -76,7 +75,7 @@ class MIP(AbpSolver):
             (i, r): m.addConstr(
                 TimeArrival[i, r + 1] - TimeFinish[i, r]
                 <= gp.quicksum(
-                    heuristic_solution.makespan * X[p, i]
+                    heuristic_two_opt_solution.makespan * X[p, i]
                     for p in abp.passengers
                     if p.row <= r
                 )
