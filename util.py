@@ -15,7 +15,7 @@ Passenger = namedtuple(
 AbpFilepath = namedtuple(
     "AbpFilepath", ["num_rows", "num_columns", "test_number"]
 )
-CURRENT_ABP_PROBLEM = AbpFilepath(num_rows=10, num_columns=2, test_number=6)
+CURRENT_ABP_PROBLEM = AbpFilepath(num_rows=10, num_columns=2, test_number=0)
 
 
 def time_taken_at_row(p: Passenger, r: int) -> int:
@@ -37,7 +37,7 @@ class AirplaneBoardingProblem:
         json_data = json.load(f)
         self.filepath = filepath
         self.num_rows: int = len(json_data["n_seats_row"])
-        self.num_cols: int = len(json_data["n_seats_row"][0])
+        self.num_cols: int = sum(json_data["n_seats_row"][0])
         self.num_passengers: int = len(json_data["times_move"])
 
         self.passengers: list[Passenger] = [
