@@ -15,6 +15,4 @@ def get_best_heuristic(abp: AirplaneBoardingProblem) -> AbpSolution:
         if two_opt_sol.makespan < makespan:
             makespan, solution = two_opt_sol.makespan, two_opt_sol
 
-        print(Heuristic.__name__, f"found solution with {two_opt_sol.makespan:.0f} makespan")
-
     return solution

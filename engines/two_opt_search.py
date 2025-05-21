@@ -4,7 +4,6 @@ from util import Passenger, AbpSolution, AirplaneBoardingProblem
 def two_opt_search(abp: AirplaneBoardingProblem, solution: AbpSolution):
     found_improvement = True
     curr_solution = solution
-    makespans = [curr_solution.makespan]
     while found_improvement:
         found_improvement = False
         for i in range(len(curr_solution.ordering)):
@@ -15,12 +14,9 @@ def two_opt_search(abp: AirplaneBoardingProblem, solution: AbpSolution):
 
                 new_solution = AbpSolution(abp, new_ordering)
                 if new_solution.makespan < curr_solution.makespan:
-                    makespans.append(new_solution.makespan)
                     curr_solution = new_solution
                     found_improvement =  True
 
-    if len(makespans) > 1:
-        print(f"Found a better solution in 2-opt: {' -> '.join(map(str, makespans))}")
     return curr_solution
 
 
