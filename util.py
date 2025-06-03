@@ -1,4 +1,5 @@
 import json
+import math
 import os.path
 from collections import namedtuple
 from abc import ABC, abstractmethod
@@ -15,8 +16,12 @@ Passenger = namedtuple(
 AbpFilepath = namedtuple(
     "AbpFilepath", ["num_rows", "num_columns", "test_number"]
 )
-CURRENT_ABP_PROBLEM = AbpFilepath(num_rows=10, num_columns=2, test_number=0)
+CURRENT_ABP_PROBLEM = AbpFilepath(num_rows=10, num_columns=2, test_number=8)
 
+def discretise(val):
+    result = int(10 * val)
+    assert result == val * 10, "Check decimal points."
+    return result
 
 def time_taken_at_row(p: Passenger, r: int) -> int:
     if r <= p.row - 1:
@@ -48,7 +53,7 @@ class AirplaneBoardingProblem:
                 settle_time=int(10 * json_data["times_clear"][i]),
                 move_times=(
                     given_times := tuple(
-                        10 * m_time for m_time in json_data["times_move"][i]
+                        int(10 * m_time) for m_time in json_data["times_move"][i]
                     )
                 )
                 + tuple(0 for _ in range(self.num_rows - len(given_times))),
@@ -70,13 +75,14 @@ class AbpSolution:
         *,
         makespan=None,
         timed_out=False,
-        finish_times=None
+        finish_times=None,
+        name=None
     ):
         self.problem = problem
         self.ordering = ordering
 
         self.computation_time = None
-        self.makespan = makespan or self.simulate_boarding()
+        self.makespan = (makespan or self.simulate_boarding()) / 10
         self.timed_out = timed_out
         self.finish_times = finish_times
 
@@ -115,7 +121,12 @@ class AbpSolution:
         makespan = max(passenger_seated_times, default=0)
         return int(makespan)
 
+    def _get_boarding_group(self, boarding_position: int):
+        return boarding_position // self.problem.num_rows
+
     def make_solution_plot(self):
+        # For same colours
+
         mapping = {(p.row, p.column): i for i, p in enumerate(self.ordering)}
 
         num_rows = max(row for row, _ in mapping)
@@ -136,8 +147,10 @@ class AbpSolution:
             for row in range(1, num_rows + 1)
         ]
 
-        unique_chars = {char for row in grid for char in row if char is not None}
-        color_map = {char: mcolors.CSS4_COLORS.get("pink") for char in unique_chars}
+        unique_chars: set[int] = {char for row in grid for char in row if char is not None}
+        # color_map = {col: mcolors.CSS4_COLORS.get("pink") for col in range(num_cols)}
+        color_map = list(mcolors.TABLEAU_COLORS.values())[:self.problem.num_passengers // num_rows]
+
         empty_col_color = "lightgray"
 
         n_rows = len(grid)
@@ -152,7 +165,7 @@ class AbpSolution:
             for j in range(n_cols):
                 char = grid[i][j]
                 color = (
-                    color_map.get(char, empty_col_color)
+                    color_map[self._get_boarding_group(char)]
                     if char is not None
                     else empty_col_color
                 )
@@ -161,7 +174,7 @@ class AbpSolution:
                     ax.text(
                         j + 0.5,
                         n_rows - i - 1 + 0.5,
-                        char,
+                        char + 1,
                         ha="center",
                         va="center",
                         fontsize=12,
@@ -194,7 +207,7 @@ class AbpSolution:
                 )
                 for i, p in enumerate(self.ordering)
                 for r in self.problem.rows
-                if r <= p.row
+                if r < p.row
             ]
         )
 
@@ -212,13 +225,13 @@ class AbpSolution:
     def visualise_solution(self):
         self.simulate_boarding()
         # self.print_solution()
-        # self.make_solution_plot()
-        self.make_gantt_chart()
+        self.make_solution_plot()
+        # self.make_gantt_chart()
         print(f"Solved in {self.computation_time:.2f}s")
-        print("Makespan", self.makespan / 10)
+        print("Makespan", self.makespan)
 
     def print_solution(self):
-        print("Found solution with makespan", self.makespan / 10)
+        print("Found solution with makespan", self.makespan)
         [
             print(i, (p.row, p.column, p.move_times[0], p.settle_time))
             for i, p in enumerate(self.ordering)

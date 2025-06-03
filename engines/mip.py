@@ -43,7 +43,7 @@ class MIP(AbpSolver):
             for r in abp.rows
         }
 
-        CompletionTime = m.addVar(vtype=gp.GRB.CONTINUOUS, ub=heuristic_two_opt_solution.makespan)
+        CompletionTime = m.addVar(vtype=gp.GRB.CONTINUOUS, ub=discretise(heuristic_two_opt_solution.makespan))
 
         # Objective --------------------------------------
         m.setObjective(CompletionTime, gp.GRB.MINIMIZE)
@@ -75,7 +75,7 @@ class MIP(AbpSolver):
             (i, r): m.addConstr(
                 TimeArrival[i, r + 1] - TimeFinish[i, r]
                 <= gp.quicksum(
-                    heuristic_two_opt_solution.makespan * X[p, i]
+                    discretise(heuristic_two_opt_solution.makespan) * X[p, i]
                     for p in abp.passengers
                     if p.row <= r
                 )

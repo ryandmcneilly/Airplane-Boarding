@@ -9,12 +9,12 @@ from util import (
     AirplaneBoardingProblem,
     AbpSolution,
     Passenger,
-    time_taken_at_row,
+    time_taken_at_row, discretise,
 )
 
 
 def earliest_finish_time_to_row(passenger: Passenger, row: int) -> int:
-    # Smallest arrival time for any passenger to that given row
+    # Smallest arrival time for passenger to that given row
     return int(sum(time_taken_at_row(passenger, r) for r in range(1, row + 1)))
 
 
@@ -52,16 +52,16 @@ class CP(AbpSolver):
 
         # Variables --------------------------------------
         CMax = m.new_int_var(
-            lb=lb_solution.makespan,
-            ub=ub_solution.makespan,
+            lb=discretise(lb_solution.makespan),
+            ub=discretise(ub_solution.makespan),
             name="CMax",
         )
-        m.add_hint(CMax, ub_solution.makespan)
+        m.add_hint(CMax, discretise(ub_solution.makespan))
 
         TF = {
             (p, r): m.new_int_var(
                 lb=earliest_finish_time_to_row(p, r),
-                ub=ub_solution.makespan,
+                ub=discretise(ub_solution.makespan),
                 name=f"TF_({p.row},{p.column}),{r}",
             )
             for p in abp.passengers
@@ -72,7 +72,7 @@ class CP(AbpSolver):
         W = {
             (p, r): m.new_int_var(
                 lb=time_taken_at_row(p, r),
-                ub=ub_solution.makespan,
+                ub=discretise(ub_solution.makespan),
                 name=f"W_({p.row},{p.column}), {r}",
             )
             for p in abp.passengers
@@ -115,11 +115,11 @@ class CP(AbpSolver):
             for (p, r), time in sorted(
                 TF.items(), key=lambda item: solver.value(item[1])
             )
-            if r == 1
+            if r == 0
         ]
 
         finish_times = {
-            (p, r): solver.value(TF[p, r]) for p in result for r in R0 if r <= p.row
+            (p, r): solver.value(TF[p, r]) for p in result for r in abp.rows if r <= p.row
         }
         return AbpSolution(
             abp,
