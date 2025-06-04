@@ -74,7 +74,6 @@ class AbpSolution:
         ordering: list[Passenger | None],
         *,
         makespan=None,
-        timed_out=False,
         finish_times=None,
         name=None
     ):
@@ -83,7 +82,6 @@ class AbpSolution:
 
         self.computation_time = None
         self.makespan = (makespan or self.simulate_boarding()) / 10
-        self.timed_out = timed_out
         self.finish_times = finish_times
 
     def simulate_boarding(self) -> int:
