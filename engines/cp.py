@@ -105,6 +105,7 @@ class CP(AbpSolver):
 
         # Result --------------------------------------
         solver = cp_model.CpSolver()
+        solver.parameters.linearization_level = 0 # no_lp
         solver.parameters.log_search_progress = True
         solver.parameters.num_workers = 8
         solver.parameters.max_time_in_seconds = 60 * 60
