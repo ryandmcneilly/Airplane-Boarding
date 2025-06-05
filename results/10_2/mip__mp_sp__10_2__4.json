@@ -1,0 +1,1 @@
+{"algorithm": "mip", "computation_time": 43.06447434425354, "instance_name": "mp_sp__10_2__4", "objective_value": 118.5, "order": [15, 0, 8, 4, 12, 11, 5, 3, 18, 17, 13, 2, 1, 7, 19, 6, 16, 9, 10, 14], "lower_bound": 118.5, "upper_bound": 118.5, "gap": 0.0}

@@ -1,0 +1,1 @@
+{"algorithm": "random", "computation_time": 0.0001995563507080078, "instance_name": "mp_sp__10_4__9", "objective_value": 495.1, "order": [36, 24, 34, 21, 32, 29, 5, 15, 3, 31, 8, 1, 18, 33, 4, 38, 39, 22, 6, 12, 25, 19, 28, 13, 35, 30, 11, 2, 37, 7, 16, 27, 20, 23, 17, 9, 26, 14, 10, 0], "lower_bound": "N/A", "upper_bound": "N/A", "gap": "N/A"}

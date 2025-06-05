@@ -1,0 +1,1 @@
+{"algorithm": "maxsettlerow", "computation_time": 0.00018644332885742188, "instance_name": "mp_sp__10_4__3", "objective_value": 190.7, "order": [33, 39, 19, 18, 35, 1, 5, 31, 12, 7, 38, 21, 27, 8, 37, 22, 34, 9, 17, 28, 29, 14, 15, 11, 30, 6, 20, 32, 13, 4, 23, 26, 10, 25, 36, 3, 24, 2, 16, 0], "lower_bound": "N/A", "upper_bound": "N/A", "gap": "N/A"}

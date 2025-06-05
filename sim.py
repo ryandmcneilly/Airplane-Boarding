@@ -1,4 +1,5 @@
 """File for comparing different models in speed"""
+import os
 
 import util
 from engines import cp
@@ -13,11 +14,12 @@ import json
 
 abp_slug = lambda name: name.lower()
 
+INVALID = '-'
 
 def run_solvers_on_abp(filepath: AbpFilepath):
     # Run solvers on filepath and make a json
-    solvers: list[AbpSolver] = [CP()]
-    # solvers = [MIP()]
+    solvers: list[AbpSolver] = [CP(), MIP(), Random(), OutsideInBTF(), MaxSettleRow()]
+    # solvers = [CP()]
     for solver in solvers:
         abp = AirplaneBoardingProblem(filepath)
         solution: AbpSolution = solver.solve(abp)
@@ -32,9 +34,19 @@ def run_solvers_on_abp(filepath: AbpFilepath):
             instance_name=instance_name,
             objective_value=solution.makespan,
             order=[p.id for p in solution.ordering if p],
-            lower_bound=solution.lower_bound or "N/A",
-            upper_bound=solution.upper_bound or "N/A",
-            gap=((abs(solution.upper_bound - solution.lower_bound) / abs(solution.upper_bound)) * 100) if solution.lower_bound else "N/A"
+            lower_bound=solution.lower_bound or "-",
+            upper_bound=solution.upper_bound or "-",
+            gap=(
+                (
+                    (
+                        abs(solution.upper_bound - solution.lower_bound)
+                        / abs(solution.upper_bound)
+                    )
+                    * 100
+                )
+                if solution.lower_bound
+                else "-"
+            ),
         )
 
         with open(

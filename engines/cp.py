@@ -38,7 +38,7 @@ def earliest_finish_time_to_row(passenger: Passenger, row: int) -> int:
 
 
 def constant_move_times_per_passenger_abp(abp: AirplaneBoardingProblem):
-    new_passengers = [
+    slow_passengers = [
         Passenger(
             row=p.row,
             column=p.column,
@@ -51,7 +51,7 @@ def constant_move_times_per_passenger_abp(abp: AirplaneBoardingProblem):
     ]
 
     slow_abp = copy.copy(abp)
-    slow_abp.passengers = new_passengers
+    slow_abp.passengers = slow_passengers
     return slow_abp
 
 
@@ -157,7 +157,7 @@ class CP(AbpSolver):
         return AbpSolution(
             abp,
             result,
-            makespan=solver.value(CMax),
+            makespan=solver.value(CMax) if status not in [cp_model.OPTIMAL, cp_model.FEASIBLE] else "N/A",
             finish_times=finish_times,
             range_=(solver.best_objective_bound / 10, solver.objective_value / 10),
         )

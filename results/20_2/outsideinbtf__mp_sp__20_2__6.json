@@ -1,0 +1,1 @@
+{"algorithm": "outsideinbtf", "computation_time": 0.00027370452880859375, "instance_name": "mp_sp__20_2__6", "objective_value": 193.1, "order": [32, 13, 34, 12, 30, 21, 15, 6, 19, 9, 27, 31, 0, 20, 16, 14, 29, 2, 33, 1, 24, 5, 8, 17, 26, 36, 37, 18, 22, 10, 39, 23, 28, 4, 11, 25, 38, 35, 3, 7], "lower_bound": "-", "upper_bound": "-", "gap": "-"}

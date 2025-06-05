@@ -14,7 +14,7 @@ Passenger = namedtuple(
 )
 
 AbpFilepath = namedtuple("AbpFilepath", ["num_rows", "num_columns", "test_number"])
-CURRENT_ABP_PROBLEM = AbpFilepath(num_rows=10, num_columns=2, test_number=0)
+CURRENT_ABP_PROBLEM = AbpFilepath(num_rows=10, num_columns=4, test_number=1)
 TIME_LIMIT = 10 * 60  # 10 minutes
 
 

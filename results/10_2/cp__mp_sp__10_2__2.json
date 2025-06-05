@@ -1,0 +1,1 @@
+{"algorithm": "cp", "computation_time": 3.23762845993042, "instance_name": "mp_sp__10_2__2", "objective_value": 101.6, "order": [18, 3, 6, 13, 19, 12, 2, 0, 10, 8, 15, 17, 9, 14, 16, 5, 7, 1, 4, 11], "lower_bound": 101.6, "upper_bound": 101.6, "gap": 0.0}
