@@ -16,7 +16,8 @@ Passenger = namedtuple(
 AbpFilepath = namedtuple(
     "AbpFilepath", ["num_rows", "num_columns", "test_number"]
 )
-CURRENT_ABP_PROBLEM = AbpFilepath(num_rows=10, num_columns=2, test_number=8)
+CURRENT_ABP_PROBLEM = AbpFilepath(num_rows=10, num_columns=2, test_number=0)
+TIME_LIMIT = 10 * 60 # 10 minutes
 
 def discretise(val):
     result = int(10 * val)
@@ -75,7 +76,7 @@ class AbpSolution:
         *,
         makespan=None,
         finish_times=None,
-        name=None
+        range_=(None, None)
     ):
         self.problem = problem
         self.ordering = ordering
@@ -83,6 +84,7 @@ class AbpSolution:
         self.computation_time = None
         self.makespan = (makespan or self.simulate_boarding()) / 10
         self.finish_times = finish_times
+        self.lower_bound, self.upper_bound = range_
 
     def simulate_boarding(self) -> int:
         abp = self.problem

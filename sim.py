@@ -14,7 +14,7 @@ import json
 abp_slug = lambda name: name.lower()
 
 
-def test_solvers_on_abp(filepath: AbpFilepath):
+def run_solvers_on_abp(filepath: AbpFilepath):
     # Run solvers on filepath and make a json
     solvers: list[AbpSolver] = [CP()]
     # solvers = [MIP()]
@@ -32,6 +32,9 @@ def test_solvers_on_abp(filepath: AbpFilepath):
             instance_name=instance_name,
             objective_value=solution.makespan,
             order=[p.id for p in solution.ordering if p],
+            lower_bound=solution.lower_bound or "N/A",
+            upper_bound=solution.upper_bound or "N/A",
+            gap=((abs(solution.upper_bound - solution.lower_bound) / abs(solution.upper_bound)) * 100) if solution.lower_bound else "N/A"
         )
 
         with open(
@@ -45,4 +48,4 @@ if __name__ == "__main__":
     for num_rows, num_cols in [(20, 2)]:
         for test_number in range(10):
             filepath = AbpFilepath(num_rows, num_cols, test_number)
-            test_solvers_on_abp(filepath)
+            run_solvers_on_abp(filepath)
