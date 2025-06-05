@@ -4,6 +4,7 @@ from engines.two_opt_search import two_opt_search
 from util import *
 import gurobipy as gp
 
+
 def has_gap(var: gp.Var) -> bool:
     try:
         var.X
@@ -11,9 +12,10 @@ def has_gap(var: gp.Var) -> bool:
     except:
         return False
 
+
 class MIP(AbpSolver):
     @staticmethod
-    def build_model(abp: AirplaneBoardingProblem) -> tuple[gp.Model, dict, dict] :
+    def build_model(abp: AirplaneBoardingProblem) -> tuple[gp.Model, dict, dict]:
         m = gp.Model("Paper Airplane Boarding")
 
         heuristic_two_opt_solution = get_best_heuristic(abp)
@@ -50,7 +52,9 @@ class MIP(AbpSolver):
             for r in abp.rows
         }
 
-        CompletionTime = m.addVar(vtype=gp.GRB.CONTINUOUS, ub=discretise(heuristic_two_opt_solution.makespan))
+        CompletionTime = m.addVar(
+            vtype=gp.GRB.CONTINUOUS, ub=discretise(heuristic_two_opt_solution.makespan)
+        )
 
         # Objective --------------------------------------
         m.setObjective(CompletionTime, gp.GRB.MINIMIZE)
@@ -127,7 +131,9 @@ class MIP(AbpSolver):
             if round(X[p, i].X) == 1:
                 result[i - 1] = p
 
-        return AbpSolution(abp, result, makespan=m.ObjVal, range_=(m.ObjBound / 10, m.ObjVal / 10))
+        return AbpSolution(
+            abp, result, makespan=m.ObjVal, range_=(m.ObjBound / 10, m.ObjVal / 10)
+        )
 
 
 if __name__ == "__main__":

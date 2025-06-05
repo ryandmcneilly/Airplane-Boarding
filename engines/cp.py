@@ -10,8 +10,11 @@ from util import (
     AirplaneBoardingProblem,
     AbpSolution,
     Passenger,
-    time_taken_at_row, discretise, TIME_LIMIT,
+    time_taken_at_row,
+    discretise,
+    TIME_LIMIT,
 )
+
 
 def get_wait_times(abp: AirplaneBoardingProblem, sol: AbpSolution):
     m, X, TF = mip.MIP.build_model(abp)
@@ -23,7 +26,11 @@ def get_wait_times(abp: AirplaneBoardingProblem, sol: AbpSolution):
     m.optimize()
 
     # Translate TF[i, r] to TF[p, r]
-    return {(next(p for p in abp.passengers if round(X[p, i].x) == 1), r): discretise(v.x)  for (i, r), v in TF.items()}
+    return {
+        (next(p for p in abp.passengers if round(X[p, i].x) == 1), r): discretise(v.x)
+        for (i, r), v in TF.items()
+    }
+
 
 def earliest_finish_time_to_row(passenger: Passenger, row: int) -> int:
     # Smallest arrival time for passenger to that given row
@@ -59,7 +66,6 @@ class CP(AbpSolver):
         print(f"Upper bound solution of: {ub_solution.makespan}")
         heuristic_finish_times = get_wait_times(abp, ub_solution)
 
-
         m = cp_model.CpModel()
 
         R0 = [0] + list(abp.rows)
@@ -82,7 +88,7 @@ class CP(AbpSolver):
             for r in R0
             if r <= p.row
         }
-        for (p, r) in TF:
+        for p, r in TF:
             if r > 0:
                 m.add_hint(TF[p, r], heuristic_finish_times[p, r])
 
@@ -96,9 +102,12 @@ class CP(AbpSolver):
             for r in R0
             if r < p.row
         }
-        for (p, r) in W:
+        for p, r in W:
             if r > 1:
-                m.add_hint(W[p, r], heuristic_finish_times[p, r] - heuristic_finish_times[p, r - 1])
+                m.add_hint(
+                    W[p, r],
+                    heuristic_finish_times[p, r] - heuristic_finish_times[p, r - 1],
+                )
 
         I = {
             (p, r): m.new_interval_var(
@@ -125,7 +134,7 @@ class CP(AbpSolver):
 
         # Result --------------------------------------
         solver = cp_model.CpSolver()
-        solver.parameters.linearization_level = 0 # no_lp
+        solver.parameters.linearization_level = 0  # no_lp
         solver.parameters.log_search_progress = True
         solver.parameters.num_workers = 8
         solver.parameters.max_time_in_seconds = TIME_LIMIT
@@ -140,7 +149,10 @@ class CP(AbpSolver):
         ]
 
         finish_times = {
-            (p, r): solver.value(TF[p, r]) for p in result for r in abp.rows if r <= p.row
+            (p, r): solver.value(TF[p, r])
+            for p in result
+            for r in abp.rows
+            if r <= p.row
         }
         return AbpSolution(
             abp,
@@ -149,6 +161,7 @@ class CP(AbpSolver):
             finish_times=finish_times,
             range_=(solver.best_objective_bound / 10, solver.objective_value / 10),
         )
+
 
 if __name__ == "__main__":
     abp = AirplaneBoardingProblem(util.CURRENT_ABP_PROBLEM)

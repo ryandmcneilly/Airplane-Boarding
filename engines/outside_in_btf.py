@@ -2,6 +2,7 @@ import util
 from util import *
 import itertools
 
+
 class OutsideInBTF(AbpSolver):
     def solve_implementation(self, abp: AirplaneBoardingProblem) -> AbpSolution:
         column_groups = [
@@ -9,12 +10,17 @@ class OutsideInBTF(AbpSolver):
             for col in range(1, abp.num_cols + 1)
         ]
 
-        result = list(itertools.chain.from_iterable([
-            sorted(column_groups[col], key=lambda p: p.row, reverse=True)
-            for col in range(len(column_groups))
-        ]))
+        result = list(
+            itertools.chain.from_iterable(
+                [
+                    sorted(column_groups[col], key=lambda p: p.row, reverse=True)
+                    for col in range(len(column_groups))
+                ]
+            )
+        )
 
         return AbpSolution(abp, result)
+
 
 if __name__ == "__main__":
     abp = AirplaneBoardingProblem(util.CURRENT_ABP_PROBLEM)

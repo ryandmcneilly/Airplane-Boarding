@@ -13,16 +13,16 @@ Passenger = namedtuple(
     "Passenger", ["row", "column", "settle_time", "move_times", "id"]
 )
 
-AbpFilepath = namedtuple(
-    "AbpFilepath", ["num_rows", "num_columns", "test_number"]
-)
+AbpFilepath = namedtuple("AbpFilepath", ["num_rows", "num_columns", "test_number"])
 CURRENT_ABP_PROBLEM = AbpFilepath(num_rows=10, num_columns=2, test_number=0)
-TIME_LIMIT = 10 * 60 # 10 minutes
+TIME_LIMIT = 10 * 60  # 10 minutes
+
 
 def discretise(val):
     result = int(10 * val)
     assert result == val * 10, "Check decimal points."
     return result
+
 
 def time_taken_at_row(p: Passenger, r: int) -> int:
     if r <= p.row - 1:
@@ -38,7 +38,10 @@ class AirplaneBoardingProblem:
     def __init__(self, filepath: AbpFilepath):
         num_rows, num_columns, test_num = filepath
         script_dir = os.path.dirname(__file__)
-        filename = os.path.join(script_dir, f"data/mp_sp/{num_rows}_{num_columns}/mp_sp__{num_rows}_{num_columns}__{test_num}.json")
+        filename = os.path.join(
+            script_dir,
+            f"data/mp_sp/{num_rows}_{num_columns}/mp_sp__{num_rows}_{num_columns}__{test_num}.json",
+        )
         f = open(filename, "r")
         json_data = json.load(f)
         self.filepath = filepath
@@ -76,7 +79,7 @@ class AbpSolution:
         *,
         makespan=None,
         finish_times=None,
-        range_=(None, None)
+        range_=(None, None),
     ):
         self.problem = problem
         self.ordering = ordering
@@ -147,9 +150,13 @@ class AbpSolution:
             for row in range(1, num_rows + 1)
         ]
 
-        unique_chars: set[int] = {char for row in grid for char in row if char is not None}
+        unique_chars: set[int] = {
+            char for row in grid for char in row if char is not None
+        }
         # color_map = {col: mcolors.CSS4_COLORS.get("pink") for col in range(num_cols)}
-        color_map = list(mcolors.TABLEAU_COLORS.values())[:self.problem.num_passengers // num_rows]
+        color_map = list(mcolors.TABLEAU_COLORS.values())[
+            : self.problem.num_passengers // num_rows
+        ]
 
         empty_col_color = "lightgray"
 
@@ -201,7 +208,7 @@ class AbpSolution:
             [
                 dict(
                     Task=f"Passenger {p.row, p.column}",
-                    Start=self.finish_times[p, r-1],
+                    Start=self.finish_times[p, r - 1],
                     Delta=self.finish_times[p, r],
                     Resource=f"Row {r}",
                 )
@@ -216,7 +223,13 @@ class AbpSolution:
         filepath = self.problem.filepath
         title = f"ABP problem: Rows={filepath.num_rows}, num_columns={filepath.num_columns}, TestNumber={filepath.test_number}"
         fig = px.bar(
-            df, base="Start", x="Finish", y="Resource", color="Task", orientation="h", title=title
+            df,
+            base="Start",
+            x="Finish",
+            y="Resource",
+            color="Task",
+            orientation="h",
+            title=title,
         )
 
         fig.update_yaxes(autorange="reversed")
