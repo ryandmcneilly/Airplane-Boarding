@@ -4,9 +4,16 @@ from engines.two_opt_search import two_opt_search
 from util import *
 import gurobipy as gp
 
+def has_gap(var: gp.Var) -> bool:
+    try:
+        var.X
+        return True
+    except:
+        return False
 
 class MIP(AbpSolver):
-    def solve_implementation(self, abp: AirplaneBoardingProblem) -> AbpSolution:
+    @staticmethod
+    def build_model(abp: AirplaneBoardingProblem) -> tuple[gp.Model, dict, dict] :
         m = gp.Model("Paper Airplane Boarding")
 
         heuristic_two_opt_solution = get_best_heuristic(abp)
@@ -93,6 +100,7 @@ class MIP(AbpSolver):
         Tau = {
             (p, r): time_taken_at_row(p, r) for p in abp.passengers for r in abp.rows
         }
+
         MovementCost = {
             (i, r): m.addConstr(
                 TimeFinish[i, r] - TimeArrival[i, r]
@@ -102,13 +110,18 @@ class MIP(AbpSolver):
             for r in abp.rows
         }
 
+        return m, X, TimeFinish
+
+    def solve_implementation(self, abp: AirplaneBoardingProblem) -> AbpSolution:
+        m, X, TimeFinish = self.build_model(abp)
+
         m.params.TimeLimit = TIME_LIMIT
 
         m.optimize()
 
         result = [None for _ in range(len(set(p for p, i in X)))]
-        if m.Status != gp.GRB.OPTIMAL:
-            AbpSolution(abp, result, makespan=m.objVal)
+        if m.Status != gp.GRB.OPTIMAL or not has_gap(next(iter(X.values()))):
+            return AbpSolution(abp, result, makespan=m.objVal)
 
         for p, i in X:
             if round(X[p, i].X) == 1:
