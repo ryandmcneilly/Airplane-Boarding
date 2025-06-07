@@ -120,6 +120,7 @@ class MIP(AbpSolver):
         m, X, TimeFinish = self.build_model(abp)
 
         m.params.TimeLimit = TIME_LIMIT
+        m.params.Threads = 8
 
         m.optimize()
 
