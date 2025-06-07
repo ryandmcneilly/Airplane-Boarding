@@ -24,4 +24,4 @@ if __name__ == "__main__":
 
     mip_solver = MaxSettleRow()
     mip_solution = mip_solver.solve(abp)
-    mip_solution.visualise_solution()
+    mip_solution.make_solution_plot()

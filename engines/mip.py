@@ -144,4 +144,4 @@ if __name__ == "__main__":
     mip_solution = mip_solver.solve(abp)
     print(f"Solved in {mip_solution.computation_time:.2f}s")
 
-    mip_solution.print_solution()
+    mip_solution.make_solution_plot()
