@@ -1,5 +1,4 @@
 import json
-import math
 import os.path
 from collections import namedtuple
 from abc import ABC, abstractmethod
@@ -14,7 +13,7 @@ Passenger = namedtuple(
 )
 
 AbpFilepath = namedtuple("AbpFilepath", ["num_rows", "num_columns", "test_number"])
-CURRENT_ABP_PROBLEM = AbpFilepath(num_rows=10, num_columns=4, test_number=1)
+CURRENT_ABP_PROBLEM = AbpFilepath(num_rows=10, num_columns=2, test_number=6)
 TIME_LIMIT = 10 * 60  # 10 minutes
 
 
@@ -33,18 +32,23 @@ def time_taken_at_row(p: Passenger, r: int) -> int:
         return 0
     assert "Unreachable"
 
+def load_file(filepath: AbpFilepath):
+    num_rows, num_columns, test_num = filepath
+    script_dir = os.path.dirname(__file__)
+    filename = os.path.join(
+        script_dir,
+        f"data/mp_sp/{num_rows}_{num_columns}/mp_sp__{num_rows}_{num_columns}__{test_num}.json",
+    )
+    f = open(filename, "r")
+    json_data = json.load(f)
+    f.close()
+    return json_data
+
 
 class AirplaneBoardingProblem:
     def __init__(self, filepath: AbpFilepath):
-        num_rows, num_columns, test_num = filepath
-        script_dir = os.path.dirname(__file__)
-        filename = os.path.join(
-            script_dir,
-            f"data/mp_sp/{num_rows}_{num_columns}/mp_sp__{num_rows}_{num_columns}__{test_num}.json",
-        )
-        f = open(filename, "r")
-        json_data = json.load(f)
         self.filepath = filepath
+        json_data = load_file(filepath)
         self.num_rows: int = len(json_data["n_seats_row"])
         self.num_cols: int = sum(json_data["n_seats_row"][0])
         self.num_passengers: int = len(json_data["times_move"])
@@ -67,8 +71,6 @@ class AirplaneBoardingProblem:
 
         self.order = range(1, len(self.passengers) + 1)
         self.rows = range(1, self.num_rows + 1)
-
-        f.close()
 
 
 class AbpSolution:
@@ -208,19 +210,21 @@ class AbpSolution:
             [
                 dict(
                     Task=f"Passenger {p.row, p.column}",
-                    Start=self.finish_times[p, r - 1],
+                    Start=self.finish_times[p, r-1],
                     Delta=self.finish_times[p, r],
                     Resource=f"Row {r}",
                 )
                 for i, p in enumerate(self.ordering)
                 for r in self.problem.rows
-                if r < p.row
+                if r <= p.row
             ]
         )
 
         df["Finish"] = df["Delta"] - df["Start"]
 
         filepath = self.problem.filepath
+        colours = px.colors.qualitative.Plotly + px.colors.qualitative.Set3
+        # colours = list(mcolors.TABLEAU_COLORS.values()) + random.sample(list(mcolors.CSS4_COLORS.values()), self.problem.num_passengers)
         title = f"ABP problem: Rows={filepath.num_rows}, num_columns={filepath.num_columns}, TestNumber={filepath.test_number}"
         fig = px.bar(
             df,
@@ -230,8 +234,9 @@ class AbpSolution:
             color="Task",
             orientation="h",
             title=title,
+            color_discrete_map=dict(zip([f"Passenger {p.row, p.column}" for p in self.problem.passengers], colours))
         )
-
+        fig.update_layout(yaxis=dict(dtick=1))
         fig.update_yaxes(autorange="reversed")
         fig.show()
 
@@ -239,7 +244,7 @@ class AbpSolution:
         self.simulate_boarding()
         # self.print_solution()
         self.make_solution_plot()
-        # self.make_gantt_chart()
+        self.make_gantt_chart()
         print(f"Solved in {self.computation_time:.2f}s")
         print("Makespan", self.makespan)
 
@@ -264,3 +269,4 @@ class AbpSolver(ABC):
         self,
         abp: AirplaneBoardingProblem,
     ) -> AbpSolution: ...
+
