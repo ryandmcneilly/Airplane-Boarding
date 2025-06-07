@@ -150,14 +150,12 @@ class CP(AbpSolver):
 
         finish_times = {
             (p, r): solver.value(TF[p, r])
-            for p in result
-            for r in abp.rows
-            if r <= p.row
+            for p,r in TF
         }
         return AbpSolution(
             abp,
             result,
-            makespan=solver.value(CMax) if status not in [cp_model.OPTIMAL, cp_model.FEASIBLE] else "N/A",
+            makespan=solver.value(CMax) if status in [cp_model.OPTIMAL, cp_model.FEASIBLE] else "N/A",
             finish_times=finish_times,
             range_=(solver.best_objective_bound / 10, solver.objective_value / 10),
         )
