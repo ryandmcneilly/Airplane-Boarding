@@ -1,7 +1,12 @@
+# Hack import trick for relative imports
+import sys
+import os
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+
 import copy
-
 from ortools.sat.python import cp_model
-
 import util
 from engines import mip
 from engines.heuristic_search import get_best_heuristic
@@ -64,6 +69,8 @@ class CP(AbpSolver):
 
         ub_solution: AbpSolution = get_best_heuristic(abp)
         print(f"Upper bound solution of: {ub_solution.makespan}")
+
+        # Run MIP with best heuristic's boarding order to get finish times.
         heuristic_finish_times = get_wait_times(abp, ub_solution)
 
         m = cp_model.CpModel()
@@ -148,14 +155,15 @@ class CP(AbpSolver):
             if r == 0
         ]
 
-        finish_times = {
-            (p, r): solver.value(TF[p, r])
-            for p,r in TF
-        }
+        finish_times = {(p, r): solver.value(TF[p, r]) for p, r in TF}
         return AbpSolution(
             abp,
             result,
-            makespan=solver.value(CMax) if status in [cp_model.OPTIMAL, cp_model.FEASIBLE] else "N/A",
+            makespan=(
+                solver.value(CMax)
+                if status in [cp_model.OPTIMAL, cp_model.FEASIBLE]
+                else "N/A"
+            ),
             finish_times=finish_times,
             range_=(solver.best_objective_bound / 10, solver.objective_value / 10),
         )

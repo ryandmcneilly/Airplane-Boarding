@@ -1,6 +1,11 @@
+# Hack import trick for relative imports
+import sys
+import os
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import util
 from engines.heuristic_search import get_best_heuristic
-from engines.two_opt_search import two_opt_search
 from util import *
 import gurobipy as gp
 
