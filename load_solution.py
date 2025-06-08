@@ -22,13 +22,15 @@ class LoadSolver(util.AbpSolver):
         f.close()
         return json_data
 
-
-    def solve_implementation(self, abp: util.AirplaneBoardingProblem, solver=CP) -> util.AbpSolution:
+    def solve_implementation(
+        self, abp: util.AirplaneBoardingProblem, solver=CP
+    ) -> util.AbpSolution:
         json_data = self.load_solution(abp.filepath, solver)
-        ordering = [next(p for p in abp.passengers if p.id == id) for id in json_data["order"]]
+        ordering = [
+            next(p for p in abp.passengers if p.id == id) for id in json_data["order"]
+        ]
         makespan = json_data["objective_value"] * 10
         return util.AbpSolution(abp, ordering, makespan=makespan)
-
 
 
 if __name__ == "__main__":

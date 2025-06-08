@@ -32,6 +32,7 @@ def time_taken_at_row(p: Passenger, r: int) -> int:
         return 0
     assert "Unreachable"
 
+
 def load_file(filepath: AbpFilepath):
     num_rows, num_columns, test_num = filepath
     script_dir = os.path.dirname(__file__)
@@ -210,7 +211,7 @@ class AbpSolution:
             [
                 dict(
                     Task=f"Passenger {p.row, p.column}",
-                    Start=self.finish_times[p, r-1],
+                    Start=self.finish_times[p, r - 1],
                     Delta=self.finish_times[p, r],
                     Resource=f"Row {r}",
                 )
@@ -234,7 +235,12 @@ class AbpSolution:
             color="Task",
             orientation="h",
             title=title,
-            color_discrete_map=dict(zip([f"Passenger {p.row, p.column}" for p in self.problem.passengers], colours))
+            color_discrete_map=dict(
+                zip(
+                    [f"Passenger {p.row, p.column}" for p in self.problem.passengers],
+                    colours,
+                )
+            ),
         )
         fig.update_layout(yaxis=dict(dtick=1))
         fig.update_yaxes(autorange="reversed")
@@ -269,4 +275,3 @@ class AbpSolver(ABC):
         self,
         abp: AirplaneBoardingProblem,
     ) -> AbpSolution: ...
-
